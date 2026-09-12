@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
-import PdfIcon from "../components/PdfIcon.jsx";
+import FileIcon from "./FileIcon.jsx";
 
 const MAX_SIZE = 30 * 1024 * 1024;
+const ACCEPT_EXTENSIONS = ["pdf", "tex", "latex", "docx"];
 
 export default function DropZone({ label, hint, file, error, onSelect, onClear, disabled }) {
   const inputRef = useRef(null);
@@ -9,9 +10,10 @@ export default function DropZone({ label, hint, file, error, onSelect, onClear, 
 
   function accept(file) {
     if (!file) return;
-    const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
-    if (!isPdf) {
-      onSelect(null, "Only PDF files are accepted.");
+    const extension = String(file.name.split(".").pop() || "").toLowerCase();
+    const isSupported = ACCEPT_EXTENSIONS.includes(extension);
+    if (!isSupported) {
+      onSelect(null, "Only PDF, TEX and DOCX files are accepted.");
       return;
     }
     if (file.size > MAX_SIZE) {
@@ -61,7 +63,7 @@ export default function DropZone({ label, hint, file, error, onSelect, onClear, 
       >
         {file ? (
           <>
-            <PdfIcon className="h-8 w-8 shrink-0 text-red-500" />
+            <FileIcon name={file.name} className="h-8 w-8 shrink-0" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{file.name}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
@@ -72,8 +74,8 @@ export default function DropZone({ label, hint, file, error, onSelect, onClear, 
           <>
             <UploadGlyph />
             <div>
-              <p className="text-sm font-medium text-slate-600">
-                Drop PDF here or <span className="text-indigo-600 dark:text-indigo-400">browse</span>
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                Drop PDF, TEX or DOCX here or <span className="text-indigo-600 dark:text-indigo-400">browse</span>
               </p>
               <p className="mt-0.5 text-xs text-slate-400">{hint}</p>
             </div>
@@ -86,7 +88,7 @@ export default function DropZone({ label, hint, file, error, onSelect, onClear, 
       <input
         ref={inputRef}
         type="file"
-        accept=".pdf,application/pdf"
+        accept=".pdf,.tex,.latex,.docx,application/pdf"
         className="hidden"
         onChange={(e) => {
           accept(e.target.files?.[0]);

@@ -57,8 +57,9 @@ export default function Home() {
     <div>
       <h1 className="text-2xl font-bold tracking-tight">Check a paper against a template</h1>
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-        Upload two PDFs. The template's formatting rules are extracted and compared against the
+        Upload two documents. The template's formatting rules are extracted and compared against the
         research paper — page setup, typography, paragraph formatting and required sections.
+        PDF, LaTeX (TEX) and Word (DOCX) files are supported, in any combination.
       </p>
 
       <form
@@ -66,7 +67,7 @@ export default function Home() {
         className="mt-8 space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
       >
         <DropZone
-          label="Template PDF"
+          label="Template"
           hint="Journal/conference formatting guidelines or sample"
           file={templateFile}
           error={errors.template}
@@ -76,7 +77,7 @@ export default function Home() {
         />
 
         <DropZone
-          label="Research paper PDF"
+          label="Research paper"
           hint="The manuscript you want to check"
           file={paperFile}
           error={errors.paper}
@@ -121,8 +122,8 @@ export default function Home() {
       </form>
 
       <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200/90">
-        Text-based PDFs only — scanned documents without extractable text are not supported yet.
-        Files never leave your machine except to the backend performing the analysis.
+        PDF, TEX and DOCX files are analyzed — scanned PDFs without extractable text are not
+        supported yet. Files never leave your machine except to the backend performing the analysis.
       </div>
     </div>
   );

@@ -24,7 +24,7 @@ export default function Results() {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <p className="text-sm text-slate-600 dark:text-slate-400">No report yet.</p>
-        <Link to="/" className="mt-3 inline-block text-sm font-semibold text-indigo-600 hover:text-indigo-700">
+        <Link to="/" className="mt-3 inline-block text-sm font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">
           Run a comparison first
         </Link>
       </div>
@@ -44,7 +44,7 @@ export default function Results() {
       </div>
 
       <div className="mt-10 text-center">
-        <Link to="/" className="text-sm font-semibold text-indigo-600 hover:text-indigo-700">
+        <Link to="/" className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">
           Compare another pair
         </Link>
       </div>
