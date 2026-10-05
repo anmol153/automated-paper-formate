@@ -1,0 +1,31 @@
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage[left=72pt,right=72pt,top=72pt,bottom=72pt]{geometry}
+\usepackage{helvet}
+
+\title{Deep Learning for Format Compliance Checking}
+\author{Alice Lee, Bob Chen\\ State University, Springfield}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We study whether research papers comply with venue formatting requirements automatically using deterministic parsing of cloud document APIs. Our prototype compares normalized documents against extracted rules and reports violations.
+\end{abstract}
+
+\section{1. Introduction}
+Formatting requirements are tedious to verify manually. We introduce a pipeline that parses documents and compares them against journal templates.
+
+Prior systems rely on heuristics over PDFs. In contrast, we operate on the structured document model directly, which preserves typography faithfully.
+
+\section{Results}
+On a corpus of fifty papers the system reaches high agreement with manual review and produces actionable per-requirement diagnostics for authors.
+
+\section{Conclusion}
+Automated compliance checking saves reviewers time and helps authors fix issues early before submission deadlines arrive.
+
+\section{References}
+[1] X. Yang, Format Matters, Journal of Documents, 2024.
+
+\end{document}

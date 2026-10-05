@@ -31,6 +31,12 @@ class DocumentInfo(BaseModel):
     columns: int = 1
     column_spacing_pt: Optional[float] = None
     title: str = ""
+    page_count: Optional[int] = Field(
+        None, description="Pages in the rendered document; an estimate for source formats"
+    )
+    page_count_exact: bool = Field(
+        True, description="False when page_count is estimated rather than measured"
+    )
 
 
 class TextFormat(BaseModel):
@@ -80,3 +86,9 @@ class NormalizedDocument(BaseModel):
             for b in self.sections
             if b.type == "body" and (b.name is None or b.name not in excluded)
         ]
+
+    def full_text(self) -> str:
+        return "\n".join(b.text for b in self.sections if b.text)
+
+    def word_count(self) -> int:
+        return len(self.full_text().split())

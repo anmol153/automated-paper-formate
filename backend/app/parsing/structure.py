@@ -38,6 +38,20 @@ _SECTION_PATTERNS: dict[str, re.Pattern[str]] = {
 
 _KEYWORDS_PATTERN = re.compile(r"^(keywords?|index\s+terms)\s*[—–·:\-.]", re.IGNORECASE)
 
+# Springer/LNCS and most numeric styles print an unnumbered bibliography with
+# no "References" heading, so a heading-based rule finds nothing. A reference
+# entry instead starts with surnames and initials -- "Author, F.:" or
+# "Smith, J., Doe, A.:" -- and usually carries a year.
+_REFERENCE_ENTRY_PATTERN = re.compile(
+    r"^[A-Z][\w'’\-]+(?:\s+[A-Z][\w'’\-]+)?,"
+    r"(?:\s*[A-Z]\.(?:\s*[A-Z]\.)*|"
+    r"(?:\s+[A-Z][\w'’\-]+,\s*[A-Z]\.)+)"
+    r"[^:]{0,120}:"
+)
+_REFERENCE_YEAR_PATTERN = re.compile(r"(\(?(?:19|20)\d{2}[a-z]?\)?)")
+
+_MIN_REFERENCE_ENTRIES = 2
+
 _MAX_AUTHORS_CHARS = 400
 _MAX_CAPS_HEADING_CHARS = 90
 
@@ -60,6 +74,39 @@ def _is_caps_heading(text: str) -> bool:
         and text.isupper()
         and any(ch.isalpha() for ch in text)
     )
+
+
+def looks_like_reference_entry(text: str) -> bool:
+    """Whether a block reads like a bibliography entry rather than prose."""
+    stripped = text.strip()
+    if not stripped or len(stripped) > 600:
+        return False
+    # Prose sentences end with a full stop and rarely open with "Surname, A.:".
+    if not _REFERENCE_ENTRY_PATTERN.match(stripped):
+        return False
+    return bool(_REFERENCE_YEAR_PATTERN.search(stripped))
+
+
+def _find_reference_start(blocks: list[RawBlock]) -> int:
+    """Index of the first block of a trailing bibliography, or ``len(blocks)``.
+
+    A run of at least ``_MIN_REFERENCE_ENTRIES`` consecutive reference-shaped
+    blocks near the end of the document is treated as the bibliography, with
+    everything after it counted as references too.
+    """
+    run = 0
+    for index in range(len(blocks) - 1, -1, -1):
+        if looks_like_reference_entry(blocks[index].text):
+            run += 1
+            if run >= _MIN_REFERENCE_ENTRIES:
+                # Walk back over any extra entries that continue the run.
+                start = index
+                while start - 1 >= 0 and looks_like_reference_entry(blocks[start - 1].text):
+                    start -= 1
+                return start
+        else:
+            run = 0
+    return len(blocks)
 
 
 def classify_blocks(blocks: list[RawBlock]) -> list[SectionBlock]:
@@ -95,6 +142,7 @@ def classify_blocks(blocks: list[RawBlock]) -> list[SectionBlock]:
     current_section: str | None = None
     abstract_buffer: list[TextFormat] = []
     abstract_texts: list[str] = []
+    reference_start = _find_reference_start(blocks)
 
     def flush_abstract() -> None:
         nonlocal abstract_buffer, abstract_texts
@@ -112,6 +160,13 @@ def classify_blocks(blocks: list[RawBlock]) -> list[SectionBlock]:
         block = blocks[index]
         stripped = _strip_numbering(block.text)
         canonical = match_canonical_section(block.text)
+
+        if index >= reference_start and not canonical:
+            # Trailing bibliography with no "References" heading: everything
+            # from here on is a reference entry.
+            sections.append(SectionBlock(type="references", text=block.text, format=block.format))
+            index += 1
+            continue
 
         if canonical:
             flush_abstract()
@@ -152,20 +207,34 @@ def classify_blocks(blocks: list[RawBlock]) -> list[SectionBlock]:
     return sections
 
 
-def aggregate_formats(formats: list[TextFormat]) -> TextFormat:
+def aggregate_formats(formats: list[TextFormat], weights: list[int] | None = None) -> TextFormat:
+    """The most representative format across a set of blocks.
+
+    ``weights`` lets a caller express how much each block matters. Template
+    inference passes text length, because a proceedings template contains many
+    short 9pt captions, references and footnotes that outnumber the body blocks
+    while carrying a fraction of their text -- counting blocks alone reads a
+    Springer LNCS template as a 9pt paper when its body is 10pt.
+    """
+    if weights is None:
+        weights = [1] * len(formats)
+
     def mode(values):
-        counts: dict[object, int] = {}
-        for v in values:
-            if v is not None:
-                counts[v] = counts.get(v, 0) + 1
+        counts: dict[object, float] = {}
+        for value, weight in zip(values, weights):
+            if value is None or weight <= 0:
+                continue
+            counts[value] = counts.get(value, 0.0) + weight
         return max(counts.items(), key=lambda item: item[1])[0] if counts else None
 
     def majority_bool(values):
-        present = [v for v in values if v is not None]
-        if not present:
+        weighted: list[tuple[object, int]] = [
+            (v, w) for v, w in zip(values, weights) if v is not None and w > 0
+        ]
+        if not weighted:
             return None
-        trues = sum(1 for v in present if v)
-        falses = len(present) - trues
+        trues = sum(w for v, w in weighted if v)
+        falses = sum(w for v, w in weighted if not v)
         return trues >= falses
 
     return TextFormat(

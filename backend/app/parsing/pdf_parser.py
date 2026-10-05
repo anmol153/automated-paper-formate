@@ -20,6 +20,7 @@ from app.models.document import (
     PageSize,
     TextFormat,
 )
+from app.parsing.errors import PdfParseError
 from app.parsing.normalizer import page_size_label
 from app.parsing.structure import RawBlock, classify_blocks, match_canonical_section
 
@@ -29,10 +30,12 @@ _BOLD_FLAG = 16
 _ITALIC_FLAG = 2
 _MID_TOLERANCE = 12.0
 _MIN_COLUMN_LINES = 5
-
-
-class PdfParseError(ValueError):
-    pass
+# A single page of a two-column *table* inside a one-column paper is enough to
+# look two-column locally. What distinguishes a real two-column paper is how
+# much of the *document* is laid out that way, so the decision is weighted by
+# the number of lines rather than by a per-page flag.
+_MIN_TWO_COLUMN_LINE_RATIO = 0.6
+_TWO_COLUMN_MIN_LINES = 20
 
 
 @dataclass
@@ -178,6 +181,8 @@ def _analyze_layout(blocks: list[BlockInfo]) -> Layout:
     rights: list[float] = []
     tops: list[float] = []
     bottoms: list[float] = []
+    two_column_lines = 0
+    total_lines = 0
 
     for page_index, page_blocks in pages.items():
         lines = [line for block in page_blocks for line in block.lines]
@@ -198,7 +203,6 @@ def _analyze_layout(blocks: list[BlockInfo]) -> Layout:
         )
 
         if two_column:
-            layout.columns = 2
             layout.regions_by_page[page_index] = [
                 (min(line.x0 for line in left_lines), max(line.x1 for line in left_lines)),
                 (min(line.x0 for line in right_lines), max(line.x1 for line in right_lines)),
@@ -206,15 +210,26 @@ def _analyze_layout(blocks: list[BlockInfo]) -> Layout:
             layout.band_top_by_page[page_index] = min(
                 min(line.y0 for line in left_lines), min(line.y0 for line in right_lines)
             )
+            two_column_lines += len(left_lines) + len(right_lines)
         else:
             layout.regions_by_page[page_index] = [
                 (min(line.x0 for line in lines), max(line.x1 for line in lines))
             ]
 
+        total_lines += len(lines)
         lefts.append(min(line.x0 for line in lines))
         rights.append(max(line.x1 for line in lines))
         tops.append(min(line.y0 for line in lines))
         bottoms.append(max(line.y1 for line in lines))
+
+    # Decide once, for the whole document, instead of letting the last page
+    # inspected have the final say.
+    if (
+        two_column_lines >= _TWO_COLUMN_MIN_LINES
+        and total_lines
+        and two_column_lines / total_lines >= _MIN_TWO_COLUMN_LINE_RATIO
+    ):
+        layout.columns = 2
 
     def clamp(value: float) -> float:
         return round(max(0.0, min(value, 200.0)), 1)
@@ -461,5 +476,7 @@ def parse_pdf(data: bytes) -> NormalizedDocument:
         orientation="landscape" if width > height else "portrait",
         columns=layout.columns,
         title=(doc.metadata or {}).get("title") or "",
+        page_count=int(doc.page_count),
+        page_count_exact=True,
     )
     return NormalizedDocument(document=info, sections=sections)

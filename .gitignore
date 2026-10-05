@@ -10,4 +10,11 @@ backend/.env
 backend/credentials/*.json
 backend/uvicorn.log
 
+# Runtime state written by the app, not source: the JSON template store and the
+# generated evaluation report are both reproducible artefacts.
+backend/data/
+evaluation_report.json
+
 .DS_Store
+.vercel
+.env*
