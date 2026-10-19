@@ -95,6 +95,11 @@ class Cursor:
     def __init__(self, cursor):
         self._cursor = cursor
 
+    def __iter__(self):
+        # SQLite cursors are iterable; several storage and route helpers use
+        # that behavior to stream rows without materializing the full result.
+        return iter(self._cursor)
+
     @property
     def rowcount(self):
         return self._cursor.rowcount
@@ -107,6 +112,9 @@ class Cursor:
 
     def fetchmany(self, size=None):
         return self._cursor.fetchmany(size) if size else self._cursor.fetchmany()
+
+    def close(self):
+        return self._cursor.close()
 
 
 class Connection:

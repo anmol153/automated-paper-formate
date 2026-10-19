@@ -1,5 +1,5 @@
 from app.storage.migrate import MIGRATIONS, migration_scripts, statements, _postgres_statement
-from app.storage.postgres_compat import Row, _row_factory, translate_sql
+from app.storage.postgres_compat import Cursor, Row, _row_factory, translate_sql
 
 
 def test_storage_listing_queries_use_postgres_compatible_tie_breakers(tmp_path):
@@ -79,6 +79,24 @@ def test_postgres_row_factory_accepts_commands_without_result_columns():
 
     make_row = _row_factory(CommandCursor())
     assert make_row(()) == ()
+
+
+def test_postgres_cursor_keeps_sqlite_iteration_and_close_behavior():
+    class RawCursor:
+        def __init__(self):
+            self.closed = False
+
+        def __iter__(self):
+            return iter(("row-1", "row-2"))
+
+        def close(self):
+            self.closed = True
+
+    raw = RawCursor()
+    cursor = Cursor(raw)
+    assert list(cursor) == ["row-1", "row-2"]
+    cursor.close()
+    assert raw.closed
 
 
 def test_sqlite_runtime_syntax_is_translated_for_postgres():
