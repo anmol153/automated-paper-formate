@@ -1,5 +1,5 @@
 from app.storage.migrate import MIGRATIONS, migration_scripts, statements, _postgres_statement
-from app.storage.postgres_compat import Row, translate_sql
+from app.storage.postgres_compat import Row, _row_factory, translate_sql
 
 
 def test_qmark_translation_preserves_question_marks_inside_literals():
@@ -14,6 +14,14 @@ def test_postgres_rows_keep_sqlite_mapping_and_sequence_behavior():
     assert row["checksum"] == "abc"
     assert dict([row]) == {8: "abc"}
     assert dict(row) == {"version": 8, "checksum": "abc"}
+
+
+def test_postgres_row_factory_accepts_commands_without_result_columns():
+    class CommandCursor:
+        description = None
+
+    make_row = _row_factory(CommandCursor())
+    assert make_row(()) == ()
 
 
 def test_sqlite_runtime_syntax_is_translated_for_postgres():

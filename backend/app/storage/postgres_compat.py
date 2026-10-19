@@ -40,6 +40,10 @@ class Row(dict):
 
 
 def _row_factory(cursor):
+    # Psycopg invokes row factories for commands like BEGIN/COMMIT too. Those
+    # commands have no result description and cannot produce row values.
+    if cursor.description is None:
+        return lambda values: values
     names = [item.name for item in cursor.description]
     return lambda values: Row(zip(names, values))
 
