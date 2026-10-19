@@ -11,6 +11,7 @@
     "test:onboarding": "node onboarding-test.mjs",
     "test:document": "node document-test.mjs",
     "test:paper": "node paper-workspace-test.mjs",
+    "test:checks": "node checks-issues-test.mjs",
     "test:invitations": "node invitation-test.mjs",
     "test:notifications": "node notification-test.mjs",
     "test:shell": "node ui-shell-test.mjs",

@@ -7,7 +7,7 @@ const output = fileURLToPath(new URL("./screenshots/", import.meta.url)); await 
 const base = process.env.PAPER_UI_BASE_URL || "http://127.0.0.1:5174";
 const browser = await chromium.launch({ executablePath: process.env.PAPER_BROWSER_PATH || "/usr/bin/chromium", headless: true });
 try {
-  for (const width of [1440, 1024, 390, 320]) {
+  for (const width of [1440, 1024, 768, 390, 320]) {
     const context = await browser.newContext({ viewport: { width, height: 1000 }, reducedMotion: "reduce" });
     const page = await context.newPage(); page.setDefaultTimeout(10000);
     const calls = [], unexpected = [], errors = []; let role = "author", failConversation = false, failUpload = false;
@@ -15,6 +15,7 @@ try {
     const paper = { submission_id: "paper-42", conference_id: "demo", paper_number: 42, title: "Towards reproducible scientific workflows", abstract: "Reproducibility depends on more than sharing a final result. We present a practical framework for tracking research artifacts, validating document requirements, and preserving the discussion behind each revision. Our evaluation examines how structured collaboration supports a transparent review process.", authors: [{ name: "Alex Researcher", affiliation: "Institute for Research Systems" }, { name: "Sam Chen", affiliation: "University of Example" }], status: "draft", metadata_version: 1, filename: "research-paper.pdf" };
     const revision = (number) => ({ revision_id: `r${number}`, number, filename: `research-paper-v${number}.pdf`, uploaded_at: "2026-10-19T08:00:00Z", uploaded_by: "Author", size_bytes: 248500, sha256: "a".repeat(64), metadata: { title: paper.title, authors: ["Alex Researcher", "Sam Chen"] }, change_summary: number === 1 ? "Initial submission for conference review." : "Reduced page count and clarified the evaluation methodology in Section 4.", template_id: "systems-2026", latest_check: { status: "passed_with_warnings" } });
     const history = { current_revision_id: "r2", revisions: [revision(2), revision(1)], can_upload_revision: true, can_recheck: true };
+    const reviewForm = { name: "Conference peer review", recommendations: ["Accept", "Reject", "Major revision"], criteria: [{ id: "quality", label: "Technical quality", kind: "score", minimum: 1, maximum: 5, required: true, visibility: "authors" }, { id: "summary", label: "Review summary", kind: "text", required: true, visibility: "authors" }] }; let ownReview = null;
     const workflow = { revision_id: "r2", status: "draft", eligible: true, reason: "The current revision satisfies the conference’s blocking formatting requirements.", formatting_gate: "block_errors", actions: ["submitted", "withdrawn"], is_chair: false, assignments: [], submission_window: { allowed: true, reason: "Paper submissions are open." } };
     const threads = [{ thread_id: "t1", revision_id: "r1", page_number: 3, visibility: "participants", resolved: false, can_resolve: true, comments: [{ comment_id: "c1", body: "Could you clarify how the evaluation handles missing research artifacts? A short example would help readers reproduce the experiment.", author_id: "Reviewer 1", author_role: "reviewer", created_at: "2026-10-18T14:30:00Z", version: 1, can_edit: false, can_delete: false }] }, { thread_id: "t2", revision_id: "r2", visibility: "participants", resolved: true, can_resolve: true, comments: [{ comment_id: "c2", body: "The updated revision addresses the page-limit warning. Thank you for including a clear change summary.", author_id: "Conference chair", author_role: "chair", created_at: "2026-10-19T09:00:00Z", version: 1, can_edit: false, can_delete: false }] }];
     await page.route("**/api/v1/**", async (route) => {
@@ -36,20 +37,38 @@ try {
       else if (path.endsWith("/conversation") && method === "POST") { const body = request.postDataJSON(); data = { thread_id: `t${threads.length + 1}`, ...body, resolved: false, can_resolve: true, comments: [{ ...threads[0].comments[0], comment_id: "new", body: body.body, author_id: "Author", author_role: "author", can_edit: true, can_delete: true }] }; threads.push(data); }
       else if (/\/conversation\/t\d+$/.test(path) && method === "PATCH") { const thread = threads.find((item) => path.endsWith(item.thread_id)); thread.resolved = request.postDataJSON().resolved; data = thread; }
       else if (path.endsWith("/transitions")) { paper.status = workflow.status = request.postDataJSON().target_status; workflow.actions = ["withdrawn"]; data = paper; }
-      else if (path.endsWith("/reviews")) data = { is_chair: false, reviews: [] };
+      else if (path.endsWith("/reviews")) data = role === "reviewer" ? { is_chair: false, reviews: ownReview ? [ownReview] : [], assignment_id: "review-assignment", can_review: true, revision_id: history.current_revision_id, own_review: ownReview, configuration: { form_id: "review-form", form: reviewForm, policy: {} } } : { is_chair: false, reviews: [] };
+      else if (path.endsWith("/reviews/mine") && method === "PUT") { const body = request.postDataJSON(); ownReview = { ...body, review_id: "review1", reviewer_id: "Reviewer", version: body.expected_version + 1, state: body.submit ? "submitted" : "draft", is_own: true, form: reviewForm }; data = ownReview; }
       else if (path.endsWith("/activity")) data = { events: [], next_before: null };
       else if (path.endsWith("/preview")) { status = 404; data = { detail: "Preview is unavailable for this synthetic fixture" }; }
       else if (path.endsWith("/file")) { await route.fulfill({ contentType: "application/pdf", body: "%PDF-synthetic-fixture" }); return; }
       else { unexpected.push(`${method} ${path}`); status = 404; data = { detail: "No fixture" }; }
       await route.fulfill({ status, contentType: "application/json", body: JSON.stringify(data) });
     });
-    async function capture(name) { await page.mouse.move(0, 0); assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${name} overflow at ${width}px`); if ([1440, 390].includes(width)) await page.screenshot({ path: `${output}${name}-${width}.png`, fullPage: true }); }
+    async function capture(name) {
+      await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo({ top: 0, behavior: "instant" }); }); await page.mouse.move(0, 0);
+      await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${name} overflow at ${width}px`);
+      if ([1440, 390].includes(width) || name === "overview" || name === "conversation") await page.screenshot({ path: `${output}${name}-${width}.png`, fullPage: true });
+    }
     async function goto(query = "") { await page.goto(`${base}/submissions/paper-42${query}`); await page.getByRole("button", { name: "Account menu", exact: true }).first().waitFor(); await page.getByRole("heading", { name: paper.title, exact: true }).waitFor(); }
-    const nav = () => page.getByRole("navigation", { name: "Submission sections", exact: true });
-    await goto(); await page.getByRole("heading", { name: "Ready for the next review step", exact: true }).waitFor(); await capture("overview");
+    const nav = () => page.locator(".pf-paper-navigation");
+    await goto(); await page.getByRole("region", { name: "Submission description", exact: true }).waitFor(); await page.getByRole("article").first().waitFor(); await capture("paper-landing");
+    assert.equal(await page.getByRole("navigation", { name: "Submission sections", exact: true }).getByRole("link").count(), 4);
+    const firstReply = page.locator(".pf-thread-reply").first(); assert.equal(await firstReply.getAttribute("open"), null);
+    await page.getByRole("button", { name: "Reply to this comment", exact: true }).first().click(); assert.notEqual(await firstReply.getAttribute("open"), null);
+    await goto("?tab=overview"); await page.getByRole("heading", { name: "Ready for the next review step", exact: true }).waitFor(); await capture("overview");
     await page.getByText("Edit paper details", { exact: true }).click(); await page.getByRole("textbox", { name: "Paper title", exact: true }).fill(paper.title + " — revised"); await page.getByRole("button", { name: "Save paper details", exact: true }).click(); await page.getByText("Paper details saved.", { exact: true }).waitFor();
     await page.getByRole("combobox", { name: "Action", exact: true }).selectOption("submitted"); await page.getByRole("button", { name: "Apply action", exact: true }).click(); await page.locator(".pf-paper-header .pf-state").filter({ hasText: "Submitted" }).waitFor();
     await nav().getByRole("link", { name: "Conversation", exact: true }).click(); await page.getByText("Please clarify", { exact: false }).count(); await page.getByRole("article").first().waitFor(); await capture("conversation");
+    const filters = page.getByRole("group", { name: "Filter discussions", exact: true });
+    await filters.getByRole("button", { name: /^Resolved/ }).click(); assert.equal(await page.getByRole("article").count(), 1);
+    await filters.getByRole("button", { name: /^All/ }).click(); assert.equal(await page.getByRole("article").count(), 2);
+    if (width <= 768) {
+      const targets = await page.locator(".pf-discussion-filters button, .pf-paper-actions button, .pf-paper-sidebar button").evaluateAll((nodes) => nodes.map((node) => ({ label: node.textContent, height: node.getBoundingClientRect().height })));
+      for (const target of targets) assert.ok(target.height >= 44, `Mobile target ${target.label} is ${target.height}px`);
+    }
+    await nav().getByRole("link", { name: "Conversation", exact: true }).focus(); assert.equal(await page.evaluate(() => document.activeElement.getAttribute("aria-current")), "page");
     await page.getByRole("button", { name: "Resolve thread", exact: true }).first().click(); await page.getByRole("article", { name: "Resolved discussion", exact: true }).first().waitFor(); await page.getByRole("button", { name: "Reopen thread", exact: true }).first().click();
     const composer = page.locator(".pf-conversation-composer"); await composer.getByRole("textbox", { name: "Comment", exact: true }).fill("We have clarified the missing-artifact case in the updated evaluation."); await composer.getByRole("combobox", { name: "Document reference", exact: true }).selectOption("r1"); await composer.getByRole("spinbutton", { name: "Page number (optional)", exact: true }).fill("3"); await composer.getByRole("button", { name: "Post comment", exact: true }).click(); await page.getByText("We have clarified the missing-artifact case in the updated evaluation.", { exact: true }).waitFor();
     const anchor = calls.find((call) => call.path.endsWith("/conversation") && call.method === "POST"); assert.equal(JSON.parse(anchor.body).revision_id, "r1");
@@ -68,6 +87,13 @@ try {
     for (const thread of threads) { thread.can_resolve = false; for (const comment of thread.comments) comment.can_edit = comment.can_delete = false; }
     await goto("?tab=conversation"); assert.equal(await page.getByRole("button", { name: "Upload revision", exact: true }).count(), 0); assert.equal(await page.getByRole("heading", { name: "Reviewer assignments", exact: true }).count(), 0); assert.equal(await composer.getByRole("combobox", { name: "Visibility", exact: true }).count(), 0); assert.equal(await page.getByRole("button", { name: "Edit", exact: true }).count(), 0); await capture("reviewer-conversation");
     await page.getByRole("button", { name: "Switch to dark mode", exact: true }).click(); await capture("conversation-dark");
+    paper.status = workflow.status = "under_review"; await goto("?tab=reviews"); await page.getByRole("heading", { name: "Your review · Conference peer review", exact: true }).waitFor(); await capture("review-form-dark");
+    await page.getByRole("button", { name: "Switch to light mode", exact: true }).click(); await capture("review-form");
+    await page.getByRole("combobox", { name: "Overall recommendation", exact: true }).selectOption("Accept");
+    await page.getByRole("spinbutton", { name: /Technical quality/ }).fill("4"); await page.getByRole("textbox", { name: /Review summary/ }).fill("The evaluation is reproducible and the methodology is clearly explained.");
+    await page.getByRole("textbox", { name: "Confidential comments for chairs", exact: true }).fill("Private reviewer note for the chair."); await page.getByRole("button", { name: "Save private draft", exact: true }).click();
+    await page.getByText(/Version 1 · draft/).first().waitFor(); assert.equal(ownReview.revision_id, history.current_revision_id); assert.equal(ownReview.submit, false); assert.equal(ownReview.answers.quality, 4);
+    await page.getByRole("combobox", { name: "Viewing revision", exact: true }).selectOption("r1"); await page.getByText("You are viewing an earlier paper revision. Select the current revision before writing a review.", { exact: true }).waitFor(); assert.equal(await page.getByRole("button", { name: "Save private draft", exact: true }).isDisabled(), true);
     assert.deepEqual(errors, []); assert.deepEqual(unexpected, []); console.log(`OK ${width}px: overview, metadata, status, threads/anchors, revision links, download, upload retry/idempotency, checks/reviews/activity, roles, errors and dark mode`); await context.close();
   }
 } finally { await browser.close(); }

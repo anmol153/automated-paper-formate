@@ -51,7 +51,7 @@ export default function Results() {
   }
 
   return (
-    <FormattingWorkspace title="Formatting results" description="Inspect the supported automated checks and the findings for each document." actions={<ButtonLink to="/reports">Saved reports →</ButtonLink>} className="pf-format-results">
+    <FormattingWorkspace title="Formatting results" description="Inspect the supported automated checks and the findings for each document." actions={<ButtonLink to="/reports">Saved reports →</ButtonLink>} className="pf-format-results pf-paper-results">
       {isBatch ? <BatchHeader report={report} /> : <SingleHeader report={report} demo={isDemo} />}
 
       <p className="pf-format-results-note">Formatting compliance is separate from a conference's peer-review decision.</p><div className="mt-8 space-y-4">
@@ -190,8 +190,7 @@ function ScoreRing({ score }) {
   const radius = 44;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference * (1 - score / 100);
-  const stroke = score >= 80 ? "#059669" : score >= 50 ? "#d97706" : "#dc2626";
-  const strokeClass = score >= 80 ? "text-success-500" : score >= 50 ? "text-warning-500" : "text-danger-500";
+  const stroke = score >= 80 ? "var(--pf-success)" : score >= 50 ? "var(--pf-attention)" : "var(--pf-danger)";
 
   return (
     <div className="shrink-0 flex items-center justify-center" aria-label={`Compliance score: ${score}%`}>

@@ -12,8 +12,8 @@
 .pf-formatting .field-label { font-size: 13px; font-weight: 600; color: var(--pf-text); }
 .pf-formatting .field-hint { font-size: 11px; line-height: 1.6; color: var(--pf-muted); }
 .pf-formatting :is(.btn-primary, .btn-secondary, .btn-outline, .btn-ghost) { min-height: 36px; border-radius: 6px; padding: 7px 12px; font-size: 13px; font-weight: 500; box-shadow: none; transition: background .15s; }
-.pf-formatting .btn-primary { background: #245edb; color: #fff; border: 1px solid #245edb; }
-.pf-formatting .btn-primary:hover:not(:disabled) { background: #194bb8; }
+.pf-formatting .btn-primary { background: var(--pf-action); color: #fff; border: 1px solid var(--pf-action); }
+.pf-formatting .btn-primary:hover:not(:disabled) { background: var(--pf-action-hover); border-color: var(--pf-action-hover); }
 .pf-formatting :is(.btn-secondary, .btn-outline) { color: var(--pf-text); background: var(--pf-surface); border: 1px solid var(--pf-border); }
 .pf-formatting :is(.btn-secondary, .btn-outline):hover:not(:disabled) { background: var(--pf-subtle); }
 .pf-formatting .btn-ghost { color: var(--pf-muted); background: transparent; border: 1px solid transparent; }
@@ -94,6 +94,20 @@
 .pf-template-change-row > div:last-child pre { background: var(--pf-success-bg); border-radius: 4px; padding: 7px 10px; color: var(--pf-success); }
 .pf-capitalize { text-transform: capitalize; }
 .pf-formatting .pf-empty > svg { width: 44px; height: 44px; }
+.pf-paper-intake .pf-management-header { padding-bottom: 20px; border-bottom: 1px solid var(--pf-border); }
+.pf-paper-intake .pf-workspace-tabs { gap: 6px; margin-bottom: 24px; }
+.pf-paper-intake .pf-workspace-tabs a { padding: 9px 12px; border: 1px solid transparent; border-radius: 6px; }
+.pf-paper-intake .pf-workspace-tabs a[aria-current] { background: var(--pf-selected); border-color: var(--pf-border); }
+.pf-paper-intake .pf-format-intake-layout { gap: 24px; }
+.pf-paper-intake .pf-format-intake-form { display: grid; gap: 16px; }
+.pf-paper-intake .pf-format-intake-form > * { margin: 0; }
+.pf-paper-intake .pf-format-intake-form > .panel { margin: 0; }
+.pf-paper-intake .pf-format-intake-form .panel-title { padding-bottom: 12px; border-bottom: 1px solid var(--pf-border); }
+.pf-paper-results .pf-management-header { padding-bottom: 20px; border-bottom: 1px solid var(--pf-border); }
+.pf-paper-results .pf-format-results-note { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border: 1px solid var(--pf-border); border-left: 3px solid var(--pf-accent); border-radius: 6px; background: var(--pf-selected); }
+.pf-paper-results .pf-formatting-paper { margin-top: 16px; }
+.pf-paper-results .pf-formatting-paper .accordion-trigger { padding: 18px 20px; }
+.pf-paper-results .pf-format-report-row:hover { background: var(--pf-canvas); }
 @media (max-width: 1100px) {
   .pf-format-intake-layout, .pf-format-template-layout { grid-template-columns: minmax(0, 1fr) 250px; gap: 20px; }
 }

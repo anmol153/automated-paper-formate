@@ -413,6 +413,10 @@ export async function getIssue(issueId) {
   return data;
 }
 
+export async function getIssueComments(issueId) {
+  return (await api.get(`/issues/${issueId}/comments`)).data;
+}
+
 export async function updateIssue(issueId, payload) {
   const { data } = await api.patch(`/issues/${issueId}`, payload);
   return data;

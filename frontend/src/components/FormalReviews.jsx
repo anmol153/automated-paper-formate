@@ -19,8 +19,8 @@ export default function FormalReviews({ submissionId, revisionId, onChanged }) {
     catch (err) { setError(errorMessage(err)); return false; }
     finally { setBusy(false); }
   }
-  return <section className="space-y-5">
-    <h2 className="text-lg font-semibold">Formal reviews</h2>
+  return <section className="space-y-5 pf-pr-formal-reviews">
+    <div className="pf-pr-formal-heading"><h2 className="text-lg font-semibold">Formal reviews</h2><p>Review the current manuscript and record your recommendation. The conference chair makes the final decision.</p></div>
     {error && <p role="alert" className="text-danger-600">{error} <button className="btn-secondary ml-2" disabled={busy} onClick={() => { setError(""); setRefresh((n) => n + 1); }}>Reload reviews</button></p>}
     {notice && <p role="status">{notice}</p>}
     {!data ? !error && <p role="status">Loading formal reviews…</p> : <>
@@ -34,7 +34,7 @@ export default function FormalReviews({ submissionId, revisionId, onChanged }) {
         <button className="btn-primary" disabled={busy || !data.progress.submitted} onClick={() => act(async () => { const result = await releaseFormalReviews(submissionId, data.revision_id); setNotice(`${result.released} review version(s) released to authors.`); })}>Release submitted reviews to authors</button>
       </section>}
       {data.assignment_id && <ReviewEditor key={`${data.revision_id}-${data.own_review?.version || 0}`} data={data} selectedRevisionId={revisionId} busy={busy} act={act} submissionId={submissionId} />}
-      {data.reviews.length === 0 && <p className="panel p-5">No reviews are visible to you yet. Authors see reviews after a chair releases them.</p>}
+      {data.reviews.length === 0 && !data.assignment_id && <p className="panel p-5">No reviews are visible to you yet. Authors see reviews after a chair releases them.</p>}
       {data.reviews.map((review) => <ReviewCard key={review.review_id} review={review} submissionId={submissionId} />)}
       {data.is_chair && <ConflictManagement submissionId={submissionId} refresh={refresh} busy={busy} act={act} />}
     </>}
@@ -55,29 +55,29 @@ function ReviewEditor({ data, selectedRevisionId, busy, act, submissionId }) {
       form_id: own?.form_id || data.configuration.form_id, expected_version: own?.version || 0, submit,
       answers, recommendation: recommendation || null, confidential_comments: confidential }));
   }
-  return <section className="panel p-5 space-y-4">
+  return <section className="panel p-5 space-y-4 pf-pr-review-editor">
     <h3 className="font-semibold">Your review · {form.name}</h3>
     <p className="text-sm">{own ? `Version ${own.version} · ${own.state}` : "Not started"}. This form is bound to the current paper revision.</p>
     {data.configuration.policy.deadline && <p className="text-sm">Deadline: {new Date(data.configuration.policy.deadline).toLocaleString()}</p>}
     {!current && <p>You are viewing an earlier paper revision. Select the current revision before writing a review.</p>}
     {!data.can_review && <p>Review editing is currently closed. The paper status, deadline, and submitted-review policy determine when edits are allowed.</p>}
     <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); save(true); }}>
-      <fieldset disabled={busy || !data.can_review || !current} className="space-y-4">
+      <fieldset disabled={busy || !data.can_review || !current} className="pf-review-fields">
         <label className="block">Overall recommendation<select className="input-base mt-2" value={recommendation} required onChange={(e) => setRecommendation(e.target.value)}><option value="">Choose a recommendation</option>{form.recommendations.map((r) => <option key={r}>{r}</option>)}</select></label>
-        {form.criteria.map((c) => <label className="block" key={c.id}>{c.label}{c.required ? " *" : ""}{c.visibility === "chairs" ? " · Chairs only" : " · May be released to authors"}
+        {form.criteria.map((c) => <label className="block" key={c.id}><span className="pf-review-field-title">{c.label}{c.required ? " *" : ""}<small>{c.visibility === "chairs" ? "Chairs only" : "Releasable to authors"}</small></span>
           {c.kind === "score" ? <input className="input-base mt-2" type="number" min={c.minimum} max={c.maximum} step="any" required={c.required} value={answers[c.id] ?? ""} onChange={(e) => setAnswers((old) => { const next = { ...old }; if (e.target.value === "") delete next[c.id]; else next[c.id] = Number(e.target.value); return next; })} /> :
             <textarea className="input-base mt-2" required={c.required} maxLength={20000} value={answers[c.id] ?? ""} onChange={(e) => setAnswers({ ...answers, [c.id]: e.target.value })} />}
         </label>)}
-        <label className="block">Confidential comments for chairs<textarea className="input-base mt-2" maxLength={20000} value={confidential} onChange={(e) => setConfidential(e.target.value)} /></label>
+        <label className="block pf-review-private-field">Confidential comments for chairs<textarea className="input-base mt-2" maxLength={20000} value={confidential} onChange={(e) => setConfidential(e.target.value)} /></label>
         <div className="flex flex-wrap gap-3"><button className="btn-secondary" type="button" onClick={() => save(false)}>Save private draft</button><button className="btn-primary">Submit formal review</button></div>
       </fieldset>
     </form>
-    <form className="space-y-2 border-t pt-4" onSubmit={async (e) => { e.preventDefault(); if (await act(() => declareOwnConflict(data.assignment_id, conflict))) navigate("/reviewer"); }}>
+    <details className="pf-pr-conflict-disclosure"><summary>Conflict of interest</summary><form className="space-y-2 border-t pt-4" onSubmit={async (e) => { e.preventDefault(); if (await act(() => declareOwnConflict(data.assignment_id, conflict))) navigate("/reviewer"); }}>
       <label className="block">Declare a conflict of interest<textarea className="input-base mt-2" required maxLength={4000} value={conflict} disabled={busy} onChange={(e) => setConflict(e.target.value)} /></label>
       <p className="text-sm text-surface-500">This immediately revokes your review assignment. The reason is visible to chairs.</p>
       <button className="btn-secondary" disabled={busy || !conflict.trim()}>Declare conflict and recuse</button>
       <Link className="ml-3 text-primary-600" to="/reviewer">Reviewer workspace</Link>
-    </form>
+    </form></details>
   </section>;
 }
 
@@ -88,7 +88,7 @@ function ReviewCard({ review, submissionId }) {
     try { setHistory(await getReviewHistory(submissionId, review.review_id)); }
     catch (err) { setError(errorMessage(err)); }
   }
-  return <article className="panel p-5 space-y-3">
+  return <article className="panel p-5 space-y-3 pf-pr-review-card">
     <h3 className="font-semibold">{review.reviewer_id} · {review.state} · Version {review.version}</h3>
     {review.latest_state === "draft" && review.state === "submitted" && <p className="text-sm">A newer private draft exists. This is the earlier submitted version.</p>}
     {review.released_at && <p className="text-sm">Released {new Date(review.released_at).toLocaleString()}</p>}

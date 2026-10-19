@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { downloadRevision, errorMessage, getRevisionChecks, getRevisions, getSubmission, getSubmissionWorkflow, recheckRevision, uploadRevision } from "../lib/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
-import { PaperCard } from "./Results.jsx";
+import PaperChecks from "../components/PaperChecks.jsx";
 import SubmissionWorkflow from "../components/SubmissionWorkflow.jsx";
 import PaperConversation from "../components/PaperConversation.jsx";
 import PaperActivity from "../components/PaperActivity.jsx";
@@ -10,8 +10,9 @@ import FormalReviews from "../components/FormalReviews.jsx";
 import RevisionComparison from "../components/RevisionComparison.jsx";
 import PaperMetadata from "../components/PaperMetadata.jsx";
 import DocumentReview from "../components/DocumentReview.jsx";
-import { PaperHeader, PaperSidebar, PaperReadiness, RevisionToolbar } from "../components/PaperWorkspace.jsx";
-
+import { PaperHeader, PaperNavigation, PaperSidebar, PaperReadiness, RevisionToolbar } from "../components/PaperWorkspace.jsx";
+import StateBadge from "../components/ui/StateBadge.jsx";
+import Button from "../components/ui/Button.jsx";
 const labels = { passed: "Passed", passed_with_warnings: "Passed with warnings", failed: "Failed", unable_to_validate: "Unable to validate" };
 const date = (value) => new Date(value).toLocaleString();
 
@@ -27,7 +28,7 @@ function Workspace({ submissionId }) {
   const [history, setHistory] = useState(null);
   const [checks, setChecks] = useState([]);
   const [runId, setRunId] = useState("");
-  const tab = params.get("tab") || "overview";
+  const tab = params.get("tab") || "conversation";
   const setTab = (nextTab) => setParams((current) => {
     const next = new URLSearchParams(current); next.set("tab", nextTab); return next;
   });
@@ -35,6 +36,7 @@ function Workspace({ submissionId }) {
   const [busy, setBusy] = useState(false);
   const [checking, setChecking] = useState(false);
   const [loadingChecks, setLoadingChecks] = useState(false);
+  const [checksError, setChecksError] = useState("");
   const [file, setFile] = useState(null);
   const [summary, setSummary] = useState("");
   const [refresh, setRefresh] = useState(0);
@@ -56,14 +58,14 @@ function Workspace({ submissionId }) {
     return () => { active = false; };
   }, [submissionId, user, refresh]);
   useEffect(() => {
-    setChecks([]); setRunId("");
+    setChecks([]); setRunId(""); setChecksError("");
     if (!selectedId || !user) return;
     let active = true;
     setLoadingChecks(true);
     setChecks([]);
     getRevisionChecks(submissionId, selectedId)
       .then((rows) => { if (active) setChecks(rows); })
-      .catch((err) => { if (active) setError(errorMessage(err)); })
+      .catch((err) => { if (active) setChecksError(errorMessage(err)); })
       .finally(() => { if (active) setLoadingChecks(false); });
     return () => { active = false; };
   }, [submissionId, selectedId, user, refresh]);
@@ -102,26 +104,21 @@ function Workspace({ submissionId }) {
   return <div className="pf-paper-workspace">
     {error && <div role="alert" className="panel p-4 text-danger-600">{error} <button className="btn-secondary ml-3" disabled={busy} onClick={() => { setError(""); setRefresh((n) => n + 1); }}>Reload</button></div>}
     {!paper || !history ? !error && <p role="status">Loading submission…</p> : <>
-      <PaperHeader paper={paper} currentRevision={history.revisions.find((revision) => revision.revision_id === history.current_revision_id)} canUpload={history.can_upload_revision} onNavigate={setTab} />
-      <nav className="pf-paper-tabs" aria-label="Submission sections">
-        {[["overview", "Overview"], ["conversation", "Conversation"], ["checks", "Formatting checks"], ["document", "Document"], ["files", "Files and revisions"], ["compare", "Compare revisions"], ["reviews", "Reviews"], ["activity", "Activity"]].map(([id, label]) => {
-          const next = new URLSearchParams(params); next.set("tab", id);
-          return <Link key={id} to={`?${next}`} aria-current={tab === id ? "page" : undefined}>{label}</Link>;
-        })}
-        <Link to={`/issues/${submissionId}`}>Issues ↗</Link>
-      </nav>
+      <PaperHeader paper={paper} revisionCount={history.revisions.length} currentRevision={history.revisions.find((revision) => revision.revision_id === history.current_revision_id)} canUpload={history.can_upload_revision} onNavigate={setTab} />
+      <PaperNavigation params={params} tab={tab} revisionCount={history.revisions.length} submissionId={submissionId} />
       {history.revisions.length > 0 && tab !== "compare" && <RevisionToolbar history={history} selected={selected} selectedId={selectedId} busy={busy}
         onChange={(id) => setParams((current) => { const next = new URLSearchParams(current); next.set("revision", id); next.delete("run"); next.delete("page"); return next; })}
         onCurrent={() => setParams((current) => { const next = new URLSearchParams(current); next.set("revision", history.current_revision_id); next.delete("run"); next.delete("page"); return next; })} />}
-      <div className={`pf-paper-layout ${!["overview", "conversation"].includes(tab) ? "pf-paper-layout--wide" : ""}`}>
+      <div className={`pf-paper-layout ${!["overview", "conversation", "reviews"].includes(tab) ? "pf-paper-layout--wide" : ""}`}>
       <div className="pf-paper-main">
       {tab === "overview" && <PaperReadiness workflow={workflow} onRetry={() => setRefresh((n) => n + 1)} />}
       {tab === "overview" && paper.abstract && <section className="panel p-5 space-y-3"><h2>Abstract</h2><p className="whitespace-pre-wrap">{paper.abstract}</p></section>}
       {tab === "overview" && selected && <section className="panel p-5 space-y-3">
-        <h2>Revision {selected.number} summary</h2><p>{selected.change_summary || "No change summary provided."}</p>
-        <p className="pf-paper-muted">Uploaded {date(selected.uploaded_at)} by {selected.uploaded_by || "Unknown"}. Formatting: {labels[selected.latest_check?.status] || "Not checked"}.</p>
+        <div className="pf-revision-summary-heading"><h2>Revision {selected.number} summary</h2><span className="pf-paper-context-label">{selectedId === history.current_revision_id ? "Current upload" : "Earlier upload"}</span></div><p>{selected.change_summary || "No change summary provided."}</p>
+        <p className="pf-paper-muted">Uploaded <time dateTime={selected.uploaded_at}>{date(selected.uploaded_at)}</time> by {selected.uploaded_by || "Unknown"}. Formatting: {labels[selected.latest_check?.status] || "Not checked"}.</p>
       </section>}
-      {tab === "conversation" && <PaperConversation submissionId={submissionId} revisions={history.revisions} currentRevisionId={history.current_revision_id} isChair={isChair} />}
+      {tab === "conversation" && <PaperConversation submissionId={submissionId} paper={paper} revisions={history.revisions} currentRevisionId={history.current_revision_id} isChair={isChair}
+        footer={<div className="pf-pr-review-status"><PaperReadiness compact workflow={workflow} onRetry={() => setRefresh((n) => n + 1)} /><div className="pf-pr-review-links"><Link to={`?${new URLSearchParams({ ...Object.fromEntries(params), tab: "checks" })}`}>View formatting checks</Link><Link to={`?${new URLSearchParams({ ...Object.fromEntries(params), tab: "reviews" })}`}>View formal reviews</Link><Link to={`?${new URLSearchParams({ ...Object.fromEntries(params), tab: "overview" })}`}>Manage submission</Link></div></div>} />}
       {tab === "activity" && <PaperActivity submissionId={submissionId} />}
       {tab === "reviews" && <FormalReviews submissionId={submissionId} revisionId={selectedId} onChanged={() => setRefresh((n) => n + 1)} />}
       {tab === "compare" && <RevisionComparison submissionId={submissionId} revisions={history.revisions} selectedId={selectedId} />}
@@ -133,46 +130,42 @@ function Workspace({ submissionId }) {
             layout={report?.revision_id === selectedId ? report.assessment?.facts?.layout : null} pageNumber={params.get("page")}
             onPageChange={(page) => setParams((current) => { const next = new URLSearchParams(current); next.set("page", page); return next; }, { replace: true })} />}
 
-          {tab === "checks" && <section className="space-y-4">
-            <div className="flex flex-wrap gap-3 items-center">
-              <h2 className="text-lg font-semibold">Formatting checks · Revision {selected.number}</h2>
-              {history.can_recheck && <button className="btn-secondary" disabled={busy} onClick={recheck}>{checking ? "Checking…" : "Run checks again"}</button>}
-            </div>
-            {loadingChecks ? <p role="status">Loading reports…</p> : report ? <>
-              <label className="block">Saved report
-                <select className="input-base mt-2" value={report.run_id} onChange={(e) => { setRunId(e.target.value); setParams((current) => { const next = new URLSearchParams(current); next.set("run", e.target.value); return next; }); }}>
-                  {checks.map((r) => <option key={r.run_id} value={r.run_id}>Run {r.sequence} · {date(r.created_at)} · {labels[r.status]}</option>)}
-                </select>
-              </label>
-              <p className="text-sm">{labels[report.status]} · Template {selected.template_id}</p>
-              {report.error && <p role="alert" className="text-danger-600">{report.error}</p>}
-              {report.assessment && <PaperCard key={report.run_id} paper={report.assessment} defaultOpen validationLabel={labels[report.status]} />}
-              {report.issues.length > 0 && <p><Link className="text-primary-600" to={`/issues/${submissionId}`}>{report.issues.length} tracked issues from this report</Link></p>}
-            </> : <p>{requestedRun ? <>The requested saved report is unavailable for this revision. <Link className="text-primary-600" to={`/submissions/${submissionId}?revision=${selectedId}&tab=checks`}>View latest saved report</Link></> : "No saved formatting report for this revision."}</p>}
-          </section>}
-          {tab === "files" && <section className="panel p-5 space-y-4">
-            <h2 className="text-lg font-semibold">Revision {selected.number} file</h2>
-            <button className="btn-secondary" disabled={busy} onClick={download}>Download {selected.filename}</button>
-            <p className="text-sm">{selected.size_bytes.toLocaleString()} bytes · Uploaded {date(selected.uploaded_at)}</p>
-            <details><summary className="cursor-pointer">File integrity</summary><p className="font-mono break-all text-xs mt-2">SHA-256: {selected.sha256}</p></details>
-            {history.can_upload_revision && <form className="space-y-4 border-t pt-4" onSubmit={upload}>
-              <h3 className="font-semibold">Upload revision {Math.max(0, ...history.revisions.map((revision) => revision.number)) + 1}</h3>
-              <p className="text-sm text-surface-500">Earlier files and reports stay available. Revisions use the submission’s pinned template.</p>
-              <label className="block">Revised paper
-                <input ref={fileInput} className="block mt-2" type="file" accept=".pdf,.docx,.tex,.latex" required disabled={busy}
-                  onChange={(e) => { setFile(e.target.files?.[0] || null); requestKey.current = null; }} />
-              </label>
-              <label className="block">Change summary
-                <textarea className="input-base mt-2" value={summary} maxLength={4000} disabled={busy}
-                  onChange={(e) => { setSummary(e.target.value); requestKey.current = null; }} />
-              </label>
-              <button className="btn-primary" disabled={busy || !file}>{busy ? "Uploading and checking…" : "Upload new revision"}</button>
+          {tab === "checks" && <PaperChecks submissionId={submissionId} revision={selected} runs={checks} report={report} requestedRun={requestedRun}
+            loading={loadingChecks} error={checksError} busy={busy} checking={checking} canRecheck={history.can_recheck} onRecheck={recheck}
+            onRetry={() => setRefresh((n) => n + 1)} onRunChange={(id) => { setRunId(id); setParams((current) => { const next = new URLSearchParams(current); next.set("run", id); return next; }); }} />}
+          {tab === "files" && <section className="pf-revision-workspace" aria-label="Paper files and revision history">
+            <div className="pf-revision-page-heading"><div><p className="pf-paper-eyebrow">IMMUTABLE UPLOAD HISTORY</p><h2>Files and revisions</h2><p>Each upload is preserved with its own formatting report and review context.</p></div><span className="pf-count">{history.revisions.length} {history.revisions.length === 1 ? "revision" : "revisions"}</span></div>
+            <div className="pf-revision-list" aria-label="Revision history">{[...history.revisions].sort((a, b) => b.number - a.number).map((revision) => {
+              const isCurrent = revision.revision_id === history.current_revision_id;
+              const isSelected = revision.revision_id === selectedId;
+              const revisionLink = `/submissions/${submissionId}?tab=files&revision=${encodeURIComponent(revision.revision_id)}`;
+              return <article className={`pf-revision-row${isSelected ? " is-selected" : ""}`} key={revision.revision_id}>
+                <span className={`pf-revision-row-mark${isCurrent ? " is-current" : ""}`} aria-hidden="true">{isCurrent ? "●" : "○"}</span>
+                <div className="pf-revision-row-content"><div className="pf-revision-row-title"><Link to={revisionLink}>Revision {revision.number}</Link>{isCurrent && <span className="pf-revision-current-label">Current</span>}{isSelected && <span className="pf-revision-selected-label">Viewing</span>}</div>
+                  <strong className="pf-revision-row-filename">{revision.filename}</strong>
+                  <p>{revision.change_summary || (revision.number === 1 ? "Initial submission" : "No change summary provided.")}</p>
+                  <div className="pf-revision-row-meta"><span>Uploaded by {revision.uploaded_by || "Unknown"}</span><time dateTime={revision.uploaded_at}>{date(revision.uploaded_at)}</time>{Number.isFinite(revision.size_bytes) && <span>{revision.size_bytes.toLocaleString()} bytes</span>}</div>
+                </div>
+                <div className="pf-revision-row-status"><StateBadge status={revision.latest_check?.status} label={revision.latest_check ? undefined : "Not checked"} /><div><Link to={`/submissions/${submissionId}?tab=document&revision=${encodeURIComponent(revision.revision_id)}`}>Document</Link><Link to={`/submissions/${submissionId}?tab=checks&revision=${encodeURIComponent(revision.revision_id)}`}>Checks</Link></div></div>
+              </article>;
+            })}</div>
+            <section className="pf-revision-file-detail" aria-label={`Selected revision ${selected.number} file details`}>
+              <div className="pf-revision-file-heading"><div><p className="pf-paper-eyebrow">SELECTED SNAPSHOT</p><h3>Revision {selected.number} · {selected.filename}</h3><p>{Number.isFinite(selected.size_bytes) ? `${selected.size_bytes.toLocaleString()} bytes · ` : ""}Uploaded {date(selected.uploaded_at)}</p></div><Button variant="primary" disabled={busy} onClick={download}>Download file</Button></div>
+              <details className="pf-revision-integrity"><summary>File integrity</summary><code>SHA-256: {selected.sha256 || "Not available"}</code></details>
+            </section>
+            {history.can_upload_revision && <form className="pf-revision-upload" onSubmit={upload}>
+              <div><p className="pf-paper-eyebrow">AUTHOR ACTION</p><h3>Upload a new revision</h3><p>Earlier files and reports stay available. New revisions use the submission’s pinned template.</p></div>
+              <label className="pf-revision-upload-file">Revised paper<input ref={fileInput} type="file" accept=".pdf,.docx,.tex,.latex" required disabled={busy}
+                  onChange={(e) => { setFile(e.target.files?.[0] || null); requestKey.current = null; }} /><span>PDF, DOCX or LaTeX source</span></label>
+              <label className="pf-revision-upload-summary">Change summary<textarea className="input-base" value={summary} maxLength={4000} disabled={busy} placeholder="Describe what changed in this revision"
+                  onChange={(e) => { setSummary(e.target.value); requestKey.current = null; }} /></label>
+              <div className="pf-revision-upload-actions"><span>{file ? file.name : "A new immutable snapshot will be added to the history."}</span><button className="btn-primary" disabled={busy || !file}>{busy ? "Uploading and checking…" : "Upload new revision"}</button></div>
             </form>}
           </section>}
         </>}
       </>}
       </div>
-      {["overview", "conversation"].includes(tab) && <PaperSidebar paper={paper} selected={selected} workflow={workflow} onNavigate={setTab} />}
+      {["overview", "conversation", "reviews"].includes(tab) && <PaperSidebar paper={paper} selected={selected} workflow={workflow} onNavigate={setTab} />}
       </div>
     </>}
   </div>;

@@ -1,20 +1,22 @@
 /* Paper-Format's semantic layer. Legacy page classes retain their own palette. */
 :root {
-  --pf-canvas: #f6f8fa;
+  --pf-canvas: #f7f8fa;
   --pf-surface: #ffffff;
-  --pf-subtle: #f0f3f6;
-  --pf-text: #1f2328;
-  --pf-muted: #59636e;
-  --pf-border: #d1d9e0;
-  --pf-accent: #245edb;
-  --pf-accent-hover: #194bb8;
-  --pf-selected: #eaf0ff;
-  --pf-success: #18763c;
-  --pf-success-bg: #e9f6ed;
-  --pf-attention: #8a5a00;
-  --pf-attention-bg: #fff4d6;
-  --pf-danger: #c53232;
-  --pf-danger-bg: #fff0ee;
+  --pf-subtle: #f1f4f8;
+  --pf-text: #20242a;
+  --pf-muted: #596579;
+  --pf-border: #d7dee8;
+  --pf-accent: #0969da;
+  --pf-accent-hover: #0550ae;
+  --pf-action: #0969da;
+  --pf-action-hover: #0550ae;
+  --pf-selected: #ddf4ff;
+  --pf-success: #1a7f37;
+  --pf-success-bg: #dafbe1;
+  --pf-attention: #9a6700;
+  --pf-attention-bg: #fff8c5;
+  --pf-danger: #d1242f;
+  --pf-danger-bg: #ffebe9;
   --pf-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   --pf-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
   --pf-space-1: 4px;
@@ -30,20 +32,22 @@
 }
 
 .dark {
-  --pf-canvas: #0d1117;
-  --pf-surface: #151b23;
-  --pf-subtle: #1b222c;
-  --pf-text: #f0f3f6;
-  --pf-muted: #a1abb7;
-  --pf-border: #3d4652;
-  --pf-accent: #7aa7ff;
-  --pf-accent-hover: #a5c3ff;
-  --pf-selected: #1b3156;
-  --pf-success: #7bd89b;
-  --pf-success-bg: #132f21;
-  --pf-attention: #edc46c;
-  --pf-attention-bg: #342910;
-  --pf-danger: #ff9993;
-  --pf-danger-bg: #3b2024;
+  --pf-canvas: #0b0c0e;
+  --pf-surface: #111315;
+  --pf-subtle: #1b1e21;
+  --pf-text: #edf0f2;
+  --pf-muted: #a1aab5;
+  --pf-border: #343a40;
+  --pf-accent: #4493f8;
+  --pf-accent-hover: #80ccff;
+  --pf-action: #1f6feb;
+  --pf-action-hover: #388bfd;
+  --pf-selected: #202327;
+  --pf-success: #3fb950;
+  --pf-success-bg: #12261e;
+  --pf-attention: #d29922;
+  --pf-attention-bg: #2a2110;
+  --pf-danger: #f85149;
+  --pf-danger-bg: #2d1418;
   --pf-overlay-shadow: 0 8px 28px #0006;
 }

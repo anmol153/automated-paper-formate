@@ -92,7 +92,7 @@ export default function Submit() {
   }
 
   return (
-    <FormattingWorkspace title="Check papers" description="Check one manuscript or a batch against your venue's saved formatting rules." actions={<ButtonLink to="/setup">Manage templates →</ButtonLink>}>
+    <FormattingWorkspace title="Check papers" description="Check one manuscript or a batch against your venue's saved formatting rules." actions={<ButtonLink to="/setup">Manage templates →</ButtonLink>} className="pf-paper-intake">
       <div className="pf-format-intake-layout"><form onSubmit={handleSubmit} className="space-y-6 pf-format-intake-form">
         <section className="panel animate-slide-up" aria-labelledby="template-heading">
           <h2 id="template-heading" className="panel-title">Venue template</h2>

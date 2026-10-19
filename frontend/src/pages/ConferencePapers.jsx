@@ -68,9 +68,9 @@ function ConferencePaperList({ confId, creating }) {
       <ReviewConfiguration confId={confId} />
       <ConferenceReviewProgress confId={confId} />
       </div></details>
-      {creating && <form id="new-submission" className="panel p-5 space-y-4" onSubmit={submit}>
-        <h2 className="text-lg font-semibold">Submit a paper</h2>
-        <p className="text-sm text-surface-500">Your first upload is kept as revision 1 and checked against this conference’s current template.</p>
+      {creating && <form id="new-submission" className="panel p-5 space-y-4 pf-conference-submission-form" onSubmit={submit}>
+        <div className="pf-submission-form-heading"><span className="pf-eyebrow">NEW MANUSCRIPT</span><h2>Submit a paper</h2>
+        <p>Your first upload becomes revision 1 and is checked against this conference’s current template.</p></div>
         {templateStatus !== "ready" && <p>Paper uploads are available once the conference template has loaded. If none is published, ask a chair to configure one above.</p>}
         {settings?.enabled && <PaperMetadataFields value={metadata} onChange={setMetadata} tracks={settings.tracks} disabled={busy || settings.submission_window.allowed === false} />}
         <label className="block">Paper file (PDF, DOCX or LaTeX)
@@ -80,16 +80,16 @@ function ConferencePaperList({ confId, creating }) {
         <label className="flex gap-2"><input type="checkbox" checked={submitForReview} disabled={busy} onChange={(e) => setSubmitForReview(e.target.checked)} /> Submit for review after formatting checks</label>
         <p className="text-sm text-surface-500">If the conference’s formatting gate is not met, the paper stays in draft so you can correct it.</p>
         {settings?.submission_window.reason && <p>{settings.submission_window.reason}</p>}
-        <button className="btn-primary" disabled={busy || !file || templateStatus !== "ready" || settings?.submission_window.allowed === false}>{busy ? "Uploading and checking…" : "Create submission"}</button>
-        <Link to={`/conferences/${confId}/latest`} className="ml-4 text-primary-600">Conference template</Link>
+        <div className="pf-submission-form-footer"><button className="btn-primary" disabled={busy || !file || templateStatus !== "ready" || settings?.submission_window.allowed === false}>{busy ? "Uploading and checking…" : "Create submission"}</button>
+        <Link to={`/conferences/${confId}/latest`}>View conference template →</Link></div>
       </form>}
-      {!creating && <section className="panel p-5 pf-paper-list">
-        <h2 className="text-lg font-semibold mb-3">Papers you can access</h2>
-        <label className="block mb-3">Search title, filename or paper number<input className="input-base mt-1" value={search} onChange={(e) => setSearch(e.target.value)} /></label>
-        {settings?.tracks.length > 0 && <label className="block mb-3">Filter papers by track<select className="input-base mt-1" value={trackFilter} onChange={(e) => setTrackFilter(e.target.value)}><option value="">All tracks</option>{settings.tracks.map((track) => <option key={track.track_id} value={track.track_id}>{track.name}</option>)}</select></label>}
-        {visiblePapers.length === 0 ? <p>{papers.length ? "No papers match these filters." : "No submissions yet."}</p> : <ul className="divide-y divide-surface-200 dark:divide-surface-800">
-          {visiblePapers.map((paper) => <li className="py-4 flex flex-wrap gap-3 justify-between" key={paper.submission_id}>
-            <Link className="text-primary-600 font-medium" to={`/submissions/${paper.submission_id}`}>{paper.paper_number ? `#${paper.paper_number} · ` : ""}{paper.title || paper.filename}{paper.title && <span className="block text-xs text-surface-500">{paper.filename}</span>}</Link>
+      {!creating && <section className="panel p-5 pf-paper-list pf-conference-paper-list">
+        <div className="pf-submission-list-heading"><div><h2>Papers you can access</h2><p>Open a paper to follow its discussion, revisions and review progress.</p></div><span className="pf-count">{visiblePapers.length} of {papers.length}</span></div>
+        <div className="pf-submission-filters"><label className="block">Search papers<input className="input-base mt-1" type="search" placeholder="Title, filename or paper number" value={search} onChange={(e) => setSearch(e.target.value)} /></label>
+        {settings?.tracks.length > 0 && <label className="block">Track<select className="input-base mt-1" value={trackFilter} onChange={(e) => setTrackFilter(e.target.value)}><option value="">All tracks</option>{settings.tracks.map((track) => <option key={track.track_id} value={track.track_id}>{track.name}</option>)}</select></label>}</div>
+        {visiblePapers.length === 0 ? <div className="pf-submission-empty"><h3>{papers.length ? "No papers match these filters" : "No submissions yet"}</h3><p>{papers.length ? "Try another title or track." : "New conference submissions will appear here."}</p></div> : <ul className="pf-conference-paper-rows">
+          {visiblePapers.map((paper) => <li className="pf-conference-paper-row" key={paper.submission_id}>
+            <div className="pf-conference-paper-info"><span className="pf-eyebrow">{paper.paper_number ? `PAPER #${paper.paper_number}` : "CONFERENCE PAPER"}</span><Link to={`/submissions/${paper.submission_id}`}>{paper.title || paper.filename}</Link>{paper.title && <span className="pf-paper-muted">{paper.filename}</span>}</div>
             <div className="pf-paper-state"><StateBadge status={paper.status} /><small>Formatting score: {paper.compliance_score ?? "—"}</small></div>
           </li>)}
         </ul>}

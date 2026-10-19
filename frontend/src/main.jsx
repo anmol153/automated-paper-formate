@@ -10,6 +10,7 @@ import "./styles/account-menu.css";
 import "./styles/auth.css";
 import "./styles/formatting.css";
 import "./styles/paper-workspace.css";
+import "./styles/paper-checks.css";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

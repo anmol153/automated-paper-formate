@@ -77,9 +77,40 @@ Visual QA refined the field labels to separate accessible names from hints,
 removed whole-card hover underlines, adjusted mobile stacking and confirmed all
 tabs/forms fit without page-wide horizontal overflow. New styles are scoped to
 `.pf-management` so unrelated legacy page bodies retain their existing styles.
-Paper detail, reviewer-workspace body and report-body redesigns remain separate work.
+Paper detail and report-body redesigns are documented separately. The chair assignment
+workspace correction is described below.
 
-## Validation
+## Chair assignment workspace correction
+
+The `/reviewer` page previously requested only the signed-in user's reviewer
+assignments. A chair with no personal assignments therefore saw an empty page even
+when their conference contained papers. Chairs now default to **Conference
+assignments**, with **My assigned reviews** available as a separate view.
+
+The new `ChairAssignments` component resolves ownership through authenticated
+conference membership, then uses the existing protected review-progress endpoint
+only for owned conferences. It displays actual papers, reviewer assignments,
+current-revision review counts, search and filters, and an assignment form using
+the existing reviewer-assignment API. Drafts are excluded from “Needs reviewers”.
+Assignment failures retain the selected reviewer; progress failures show a retry
+and unavailable totals rather than misleading zero counts. Backend conflict and
+authorization checks remain authoritative. No backend contracts, schema or demo
+records were changed.
+
+Current validation for this correction: **28 management scenarios passed**, the
+production build passed, and intercepted Chromium journeys passed at **1440,
+1024, 768, 390 and 320 px**, including chair/personal view switching, successful
+and denied assignments, failed progress loading, dark mode and non-chair access.
+The build retains the existing large-chunk advisory (592.42 kB JavaScript).
+These checks use synthetic API fixtures and do not establish live persistence.
+
+Reproduce with `node docs/ui-reconstruction/management/chair-assignment-checks.mjs`
+using the environment variables described below. Captures:
+[desktop](screenshots/chair-assignments-1440.png),
+[mobile](screenshots/chair-assignments-390.png), and
+[dark mode](screenshots/chair-assignments-dark-1440.png).
+
+## Original management slice validation
 
 - `npm run test:management`: **11 scenarios passed**, including successful login,
   directory failure/retry, search, anonymous creation guard, failed creation with

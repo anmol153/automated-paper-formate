@@ -15,6 +15,45 @@
 .pf-eyebrow { display: block; font-size: 11px; font-weight: 650; letter-spacing: 1.2px; color: var(--pf-muted); }
 .pf-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
 .pf-stack { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.pf-assignment-views { display: flex; flex-wrap: wrap; gap: 8px; }
+.pf-assignment-views button[aria-pressed="true"] { background: var(--pf-selected); color: var(--pf-accent); border-color: var(--pf-accent); }
+.pf-chair-assignment-stats { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); border: 1px solid var(--pf-border); border-radius: 8px; background: var(--pf-surface); }
+.pf-chair-assignment-stats > div { display: grid; gap: 4px; padding: 16px; border-right: 1px solid var(--pf-border); }
+.pf-chair-assignment-stats > div:last-child { border: 0; }
+.pf-chair-assignment-stats span { color: var(--pf-muted); font-size: 12px; }
+.pf-chair-assignment-stats strong { font-size: 24px; font-weight: 600; }
+.pf-chair-assignment-filters { display: grid; grid-template-columns: minmax(0,1fr) minmax(160px,240px) minmax(140px,200px); gap: 16px; }
+.pf-chair-paper { padding: 16px 20px; border-bottom: 1px solid var(--pf-border); }
+.pf-chair-paper:last-child { border-bottom: 0; }
+.pf-chair-paper-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+.pf-chair-paper-heading > div { min-width: 0; }
+.pf-chair-paper-heading a { display: block; margin-top: 4px; font-weight: 600; overflow-wrap: anywhere; }
+.pf-chair-paper-grid { display: grid; grid-template-columns: minmax(0,1.4fr) minmax(160px,1fr) auto; gap: 16px; }
+.pf-chair-paper-grid h3 { font-size: 12px; color: var(--pf-muted); margin-bottom: 8px; }
+.pf-chair-paper-grid p,.pf-chair-paper-grid details { font-size: 12px; }
+.pf-chair-paper-grid summary { cursor: pointer; color: var(--pf-muted); margin-top: 8px; }
+.pf-chair-paper-grid li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-bottom: 6px; font-size: 12px; }
+.pf-chair-paper-grid code { overflow-wrap: anywhere; }
+.pf-chair-paper-actions { display: flex; align-items: start; flex-direction: column; gap: 8px; font-size: 12px; }
+.pf-chair-assign-form { padding-top: 12px; margin-top: 8px; border-top: 1px solid var(--pf-border); font-size: 12px; }
+.pf-chair-assign-form > summary { color: var(--pf-accent); cursor: pointer; }
+.pf-chair-assign-form form { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; padding-top: 12px; }
+.pf-chair-assign-form .pf-field { flex: 1; min-width: min(100%,220px); }
+.pf-chair-assign-form form > p { flex-basis: 100%; }
+.pf-chair-assignments .pf-card-heading { flex-wrap: wrap; }
+.pf-chair-assignments .pf-card-heading > div { min-width: 0; }
+.pf-chair-assignments .pf-card-heading h2 { overflow-wrap: anywhere; }
+@media (max-width: 1100px) { .pf-chair-paper-grid { grid-template-columns: minmax(0,1fr) minmax(0,1fr); } .pf-chair-paper-actions { grid-column: 1 / -1; flex-direction: row; align-items: center; flex-wrap: wrap; } }
+@media (max-width: 767px) {
+  .pf-chair-assignment-filters { grid-template-columns: minmax(0,1fr); }
+  .pf-chair-assignment-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .pf-chair-assignment-stats > div:nth-child(2) { border-right: 0; }
+  .pf-chair-assignment-stats > div:nth-child(-n+2) { border-bottom: 1px solid var(--pf-border); }
+  .pf-chair-paper { padding: 16px; }
+  .pf-chair-paper-heading { flex-wrap: wrap; }
+  .pf-chair-paper-grid { grid-template-columns: minmax(0,1fr); }
+  .pf-chair-assign-form > summary,.pf-chair-paper-grid summary { min-height: 44px; align-content: center; }
+}
 .pf-card { min-width: 0; border: 1px solid var(--pf-border); border-radius: 8px; background: var(--pf-surface); overflow: clip; }
 .pf-card-heading { padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--pf-border); }
 .pf-card-heading p { font-size: 12px; margin-top: 4px; }
@@ -114,6 +153,39 @@
 .pf-conference-content .btn-secondary, .pf-conference-content .btn-primary { border-radius: 6px; font-size: 13px; min-height: 36px; box-shadow: none; }
 .pf-conference-content .btn-primary { background: var(--pf-accent); color: var(--pf-surface); }
 .pf-conference-content summary { padding: 10px 0; color: var(--pf-accent); }
+.pf-conference-content .pf-management-header { padding-bottom: 20px; border-bottom: 1px solid var(--pf-border); }
+.pf-conference-content .pf-inline-configuration { border-radius: 8px; }
+.pf-conference-content .pf-inline-configuration > summary { padding: 10px 4px; }
+.pf-conference-content .pf-submission-form-heading { padding: 4px 0 16px; border-bottom: 1px solid var(--pf-border); }
+.pf-conference-content .pf-submission-form-heading h2 { margin: 5px 0 6px; font-size: 20px; letter-spacing: -.3px; }
+.pf-conference-content .pf-submission-form-heading p { font-size: 13px; }
+.pf-conference-submission-form { max-width: 920px; }
+.pf-conference-submission-form > label:not(.pf-field) { display: block; font-size: 13px; font-weight: 600; }
+.pf-conference-submission-form input[type="file"] { width: 100%; padding: 16px; border: 1px dashed var(--pf-border); border-radius: 8px; background: var(--pf-canvas); color: var(--pf-text); font-size: 13px; }
+.pf-conference-submission-form input[type="file"]::file-selector-button { margin-right: 12px; padding: 8px 12px; border: 1px solid var(--pf-border); border-radius: 6px; background: var(--pf-surface); color: var(--pf-text); font: inherit; cursor: pointer; }
+.pf-conference-submission-form input[type="checkbox"] { accent-color: var(--pf-accent); }
+.pf-conference-content .pf-submission-form-footer { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 20px; padding-top: 16px; border-top: 1px solid var(--pf-border); }
+.pf-conference-content .pf-submission-form-footer a { font-size: 12px; font-weight: 600; }
+.pf-conference-paper-list { padding: 0 !important; }
+.pf-submission-list-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 24px; border-bottom: 1px solid var(--pf-border); }
+.pf-submission-list-heading h2 { margin-bottom: 4px; }
+.pf-submission-list-heading p { font-size: 12px; }
+.pf-submission-filters { display: grid; grid-template-columns: minmax(0,1fr) minmax(180px,260px); gap: 16px; padding: 16px 24px; background: var(--pf-canvas); border-bottom: 1px solid var(--pf-border); }
+.pf-submission-filters label { display: grid; gap: 5px; color: var(--pf-muted); font-size: 12px; font-weight: 600; }
+.pf-conference-content .pf-submission-filters .input-base { margin: 0; min-height: 38px; }
+.pf-conference-paper-rows { list-style: none; margin: 0; padding: 0; }
+.pf-conference-paper-row { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 18px 24px; border-bottom: 1px solid var(--pf-border); }
+.pf-conference-paper-row:last-child { border-bottom: 0; }
+.pf-conference-paper-info { display: grid; gap: 4px; min-width: 0; }
+.pf-conference-paper-info .pf-eyebrow { font-size: 10px; }
+.pf-conference-paper-info > a { color: var(--pf-text) !important; font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.pf-conference-paper-info > a:hover { color: var(--pf-accent) !important; }
+.pf-conference-paper-info .pf-paper-muted { color: var(--pf-muted); font-size: 12px; }
+.pf-conference-paper-row .pf-paper-state { align-items: flex-end; flex-shrink: 0; }
+.pf-conference-paper-row .pf-paper-state small { font-size: 11px; }
+.pf-submission-empty { padding: 42px 24px; text-align: center; }
+.pf-submission-empty h3 { margin-bottom: 5px; }
+.pf-submission-empty p { font-size: 12px; }
 .pf-inline-configuration { padding: 8px 20px; }
 .pf-inline-configuration > summary { cursor: pointer; font-size: 13px; font-weight: 600; }
 .pf-inline-configuration > .pf-stack { padding: 10px 0; }
@@ -182,4 +254,9 @@
   .pf-member-row { flex-wrap: wrap; }
   .pf-created button { margin: 8px 0 0; }
   .pf-management :is(.pf-button, .btn-primary, .btn-secondary) { min-height: 44px; }
+  .pf-submission-list-heading,.pf-submission-filters { padding-inline: 16px; }
+  .pf-conference-paper-row { align-items: flex-start; flex-direction: column; gap: 12px; padding: 16px; }
+  .pf-conference-paper-row .pf-paper-state { align-items: flex-start; }
+  .pf-submission-filters { grid-template-columns: minmax(0,1fr); }
+  .pf-conference-submission-form { padding: 18px !important; }
 }

@@ -1,5 +1,5 @@
 const states = {
-  draft: ["neutral", "Draft"], submitted: ["info", "Submitted"], under_review: ["info", "Under review"],
+  draft: ["neutral", "Draft"], submitted: ["success", "Submitted"], under_review: ["info", "Under review"],
   changes_requested: ["attention", "Changes requested"], accepted: ["success", "Accepted"],
   rejected: ["danger", "Rejected"], withdrawn: ["neutral", "Withdrawn"],
   passed: ["success", "Passed"], passed_with_warnings: ["attention", "Passed with warnings"],

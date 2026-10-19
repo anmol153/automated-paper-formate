@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import Button, { ButtonLink } from "../components/ui/Button.jsx";
 import StateBadge from "../components/ui/StateBadge.jsx";
 import Field from "../components/ui/Field.jsx";
+import ChairAssignments from "../components/ChairAssignments.jsx";
 
 export default function ReviewerWorkspace() {
   const { user, loading } = useAuth();
@@ -15,6 +16,10 @@ export default function ReviewerWorkspace() {
   const [refresh, setRefresh] = useState(0);
   const [search, setSearch] = useState("");
   const [reviewFilter, setReviewFilter] = useState("");
+  const [chairCount, setChairCount] = useState(null);
+  const [view, setView] = useState("auto");
+  const chairView = view === "chair" || (view === "auto" && chairCount > 0);
+  const personalView = view === "personal" || (view === "auto" && chairCount === 0);
   useEffect(() => {
     if (!user) return;
     let active = true;
@@ -32,9 +37,11 @@ export default function ReviewerWorkspace() {
   if (!user) return <div className="pf-management pf-card pf-empty"><h1>Reviewer workspace</h1><p>Sign in to see your review assignments.</p><ButtonLink variant="primary" to="/login">Sign in</ButtonLink></div>;
   const visible = data?.assignments.filter((item) => (!reviewFilter || item.review_state === reviewFilter) && `${item.title || ""} ${item.filename || ""} ${item.paper_number || ""}`.toLowerCase().includes(search.toLowerCase())) || [];
   return <div className="pf-management pf-reviewer-page pf-stack">
-    <header className="pf-management-header"><div><p className="pf-eyebrow">PEER REVIEW</p><h1>Reviewer workspace</h1><p>Your assigned papers, review progress and conflict declarations.</p></div><Button disabled={busy} onClick={() => setRefresh((value) => value + 1)}>Refresh assignments</Button></header>
-    {error && <div role="alert" className="pf-message pf-message--error">{error} Use Refresh assignments to retry.</div>}
-    {!data ? !error && <div className="pf-card pf-empty" role="status">Loading review assignments…</div> : <>
+    <header className="pf-management-header"><div><p className="pf-eyebrow">PEER REVIEW</p><h1>{chairCount > 0 ? "Review assignments" : "Reviewer workspace"}</h1><p>{chairCount > 0 ? "Manage your conferences’ reviewer assignments and track submitted reviews." : "Your assigned papers, review progress and conflict declarations."}</p></div><Button disabled={busy} onClick={() => setRefresh((value) => value + 1)}>Refresh assignments</Button></header>
+    {chairCount > 0 && <div className="pf-assignment-views" role="group" aria-label="Assignment workspace view"><Button aria-pressed={chairView} onClick={() => setView("chair")}>Conference assignments</Button><Button aria-pressed={personalView} onClick={() => setView("personal")}>My assigned reviews{data ? ` (${data.assignments.length})` : ""}</Button></div>}
+    <ChairAssignments userId={user.user_id} refreshKey={refresh} visible={chairView} onLoaded={setChairCount} />
+    {personalView && error && <div role="alert" className="pf-message pf-message--error">{error} Use Refresh assignments to retry.</div>}
+    {personalView && (!data ? !error && <div className="pf-card pf-empty" role="status">Loading review assignments…</div> : <>
       <section className="pf-card"><div className="pf-card-heading"><div><h2>Assigned papers</h2><p>Only papers currently assigned to your account.</p></div><span className="pf-count">{data.assignments.length} assignments</span></div>
       <div className="pf-review-filters"><label className="pf-search"><span className="sr-only">Search assigned papers</span><input type="search" placeholder="Search title, file or paper number…" value={search} onChange={(event) => setSearch(event.target.value)} /></label><label><span className="sr-only">Filter by review progress</span><select value={reviewFilter} onChange={(event) => setReviewFilter(event.target.value)}><option value="">All review progress</option><option value="not_started">Not started</option><option value="draft">Draft</option><option value="submitted">Submitted</option></select></label></div>
       {!visible.length && <div className="pf-empty"><span className="pf-empty-symbol" aria-hidden="true">✓</span><h3>{data.assignments.length ? "No papers match these filters." : "No active review assignments."}</h3><p>{data.assignments.length ? "Try another title or reset the filters." : "A conference chair will assign papers to you. New assignments will appear here."}</p>{(search || reviewFilter) && <Button onClick={() => { setSearch(""); setReviewFilter(""); }}>Clear review filters</Button>}</div>}
@@ -54,6 +61,6 @@ export default function ReviewerWorkspace() {
           <p className="pf-fine-print">A chair must explicitly reassign you after resolution.</p>
         </form>)}
       </div></section>}
-    </>}
+    </>)}
   </div>;
 }

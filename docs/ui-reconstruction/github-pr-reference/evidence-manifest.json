@@ -1,0 +1,311 @@
+{
+  "observed_on": "2026-10-19",
+  "cdp_endpoint": "http://127.0.0.1:9222",
+  "scope": "User-selected public microsoft/vscode GitHub tab and primer.style tab; each inspected separately.",
+  "capture_notes": [
+    "Screenshots are unedited REA PNG artifacts. No cookies, credentials, storage values, source scripts or network bodies are retained here.",
+    "Desktop PNGs are 1215\u00d71279. Valid mobile captures used a 390\u00d7844 CSS viewport; browser scaling produced 488\u00d71055 PNGs.",
+    "Transient REA viewport captures that clipped desktop content are excluded from design evidence.",
+    "Early selector failures and one navigation wait timeout are not treated as verified interactions.",
+    "Chrome session belongs to the user and is left open; temporary viewport overrides are restored."
+  ],
+  "captures": [
+    {
+      "label": "github-header-desktop",
+      "url": "https://github.com/microsoft/vscode/pull/342518",
+      "evidence_id": "ev_107dcc302da2658bed93da2ba7059d0a46b2d39989c8afddffb4e213ad825324",
+      "screenshot_evidence_id": "ev_f7943d18766fb8263db9b4073d914b3c968a9e51bac348769a1cfbe38d72af95",
+      "screenshot": "docs/ui-reconstruction/github-pr-reference/screenshots/github-header-desktop.png",
+      "sha256": "434c691c71b21e15ec5e35de9efbb97a9b643b78e42d6fa13b86cfd0936ff367",
+      "png_dimensions": {
+        "width": 1215,
+        "height": 1279
+      },
+      "notes": "Actual desktop capture after transient narrow emulation reset; this is not a mobile screenshot."
+    },
+    {
+      "label": "github-check-suite-open",
+      "url": "https://github.com/microsoft/vscode/pull/342518/checks",
+      "evidence_id": "ev_07121a4a7a7a1f8454e1402e1f1e0af066b09affd80304c83c9952ba77c627c5",
+      "screenshot_evidence_id": "ev_e22a2bae4c8220e4bd9d231d88ecd1079af8b3f4e61de21c91fcc43ef35fd020",
+      "screenshot": "docs/ui-reconstruction/github-pr-reference/screenshots/github-check-suite-open.png",
+      "sha256": "f2df806a5944b412b0947402aeb31d9f613f34bfc4f7fd22fa6576a27893337e",
+      "png_dimensions": {
+        "width": 1215,
+        "height": 1279
+      }
+    },
+    {
+      "label": "github-failed-check-detail",
+      "url": "https://github.com/microsoft/vscode/actions/runs/39239961431/job/118018100771?pr=342518",
+      "evidence_id": "ev_d3b1b7d5ef8ddd07c2771e18e4c15eba383202b6391e6b996e6f6488fa7dddf4",
+      "screenshot_evidence_id": "ev_834e1d67f1bea7c721a01037d9451e338a498137c29f2eda271cfa293197cc1e",
+      "screenshot": "docs/ui-reconstruction/github-pr-reference/screenshots/github-failed-check-detail.png",
+      "sha256": "258f025f3831367a66d067b4e7838fbf0eaced49263f9cd4b0acbb79fc0cdfa0",
+      "png_dimensions": {
+        "width": 1215,
+        "height": 1279
+      }
+    },
+    {
+      "label": "github-files-changed",
+      "url": "https://github.com/microsoft/vscode/pull/342518/files",
+      "evidence_id": "ev_a040896a88a1082dfee034f585e965a830ee992b280db08fc8714081fb2ac819",
+      "screenshot_evidence_id": "ev_992e7ff19bf73b4e6737cb0055ec3c4a2568c3b0ba274412c0ef85a93eb20124",
+      "screenshot": "docs/ui-reconstruction/github-pr-reference/screenshots/github-files-changed.png",
+      "sha256": "a991f4cac266716bce26988e19c280aeca5ddcf681c7fc1f3011b379f3435650",
+      "png_dimensions": {
+        "width": 1215,
+        "height": 1279
+      }
+    },
+    {
+      "label": "github-diff-settings",
+      "url": "https://github.com/microsoft/vscode/pull/342518/files",
+      "evidence_id": "ev_1fff6f6fd7d05b6cc7d555140e88aae93e943359b6ac02009bdb895b1ac5d485",
+      "screenshot_evidence_id": "ev_1372131969a590f1d6aaad82e9bd7e2e7e4f41b9a2b0b1de2968932a63377316",
+      "screenshot": "docs/ui-reconstruction/github-pr-reference/screenshots/github-diff-settings.png",
+      "sha256": "5b477800e540f3fac34678359db01d2b982319286dced143703bc0ae6d96d3eb",
+      "png_dimensions": {
+        "width": 1215,
+        "height": 1279
+      }
+    },
+    {
+      "label": "github-split-diff-loaded",
+      "url": "https://github.com/microsoft/vscode/pull/342518/files?diff=split&w=0",
+      "evidence_id": "ev_ed18dc63e8094ee50e6f5863031ce6f631868fbbfcf1463ea191e55eafd9edc8",
+      "screenshot_evidence_id": "ev_4f6f0f511fbebeeda34080ce875e66bb52277c0a3d2f234e2ba549343ffa6768",
+      "screenshot": "docs/ui-reconstruction/github-pr-reference/screenshots/github-split-diff-loaded.png",
+      "sha256": "2d2fc3afa28e50aecd09982992e781f4f5af3bfeb08d5fd692c85f2e8676e09a",
+      "png_dimensions": {
+        "width": 1215,
+        "height": 1279
+      }
+    },
+    {
+      "label": "github-review-thread",
+      "url": "https://github.com/microsoft/vscode/pull/342518#pullrequestreview-5570514560",
+      "evidence_id": "ev_306c9d2a09875071b3885608f93274f55c8cd28b5929af9abfdba71a1b61377f",
+      "screenshot_evidence_id": "ev_6e36dd66ecefa5c5b5750d147e8f3adc744656630969ae74f6f83643f32de28f",
+      "screenshot": "docs/ui-reconstruction/github-pr-reference/screenshots/github-review-thread.png",
+      "sha256": "84a4acf26c85ccec116520c97c1fb02f05bd15d336e8626582fd2f431e2487c3",
+      "png_dimensions": {
+        "width": 1215,
+        "height": 1279
+      }
+    },
+    {
+      "label": "github-commits",
+      "url": "https://github.com/microsoft/vscode/pull/342518/commits",
+      "evidence_id": "ev_b08f795d4315639bf15098f2583772fca98fcb233f6228dfcdc108f77f9a9177",
+      "screenshot_evidence_id": "ev_9358b13836546633bf637ba15fe2e6ec3fffaf9a6eace25e81f6ca741139c9f2",
+      "screenshot": "docs/ui-reconstruction/github-pr-reference/screenshots/github-commits.png",
+      "sha256": "156d9b33f64b800645db9c009a5d39e5ac6f9746d27bd63879d204827d739275",
+      "png_dimensions": {
+        "width": 1215,
+        "height": 1279
+      }
+    },
+    {
+      "label": "github-approved-pr",
+      "url": "https://github.com/microsoft/vscode/pull/342496",
+      "evidence_id": "ev_3eacd7bf57bc982107239aa6e93eadd4dacf64ab3e62764d73251ff94aecac9e",
+      "screenshot_evidence_id": "ev_7faac51001acc02d7973267ed35fd4a89d8e26acd2888759ce3ff43e0cd90564",
+      "screenshot": "docs/ui-reconstruction/github-pr-reference/screenshots/github-approved-pr.png",
+      "sha256": "181b603ab34ad90a45dde9ee259ef24b256fa8927873e49833c9a0cc6afbca28",
+      "png_dimensions": {
+        "width": 1215,
+        "height": 1279
+      }
+    },
+    {
+      "label": "github-review-history",
+      "url": "https://github.com/microsoft/vscode/pull/342101#pullrequestreview-5554348132",
+      "evidence_id": "ev_7a439b44404eb60df390e7da7c054573f8f53b173fa849fe0b8c25383d21a4c2",
+      "screenshot_evidence_id": "ev_d2c56aa2d95f75bcf8670cd465ff5ac895197a0f02776b0ff0fb93f318c4a0c4",
+      "screenshot": "docs/ui-reconstruction/github-pr-reference/screenshots/github-review-history.png",
+      "sha256": "d477dfdb2f4dc7244d4b2e9297be94602ad87b217947e24e62a7ccc8102e56a9",
+      "png_dimensions": {
+        "width": 1215,
+        "height": 1279
+      },
+      "notes": "Screenshot shows review-history context; the precise requested-changes event is corroborated by the accessibility evidence, not visible in this frame."
+    },
+    {
+      "label": "github-mobile-thread",
+      "url": "https://github.com/microsoft/vscode/pull/342518",
+      "evidence_id": "ev_2c0e6a77fa96337ad807f60c1d2b00e599fcf994323a6b74a2e9944067be6cd6",
+      "screenshot_evidence_id": "ev_2c0e6a77fa96337ad807f60c1d2b00e599fcf994323a6b74a2e9944067be6cd6",
+      "screenshot": "docs/ui-reconstruction/github-pr-reference/screenshots/github-mobile-thread.png",
+      "sha256": "e6fd27363fd9f65e17a5b1afe7605763e59606030dbc75a9fcc4c04d5b048802",
+      "png_dimensions": {
+        "width": 488,
+        "height": 1055
+      },
+      "css_viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "label": "primer-home",
+      "url": "https://primer.style/",
+      "evidence_id": "ev_fa3ed5f4f6211e784eda596f22af7aaaab1edd3c08c25303b28c2bbdde90d547",
+      "screenshot_evidence_id": "ev_fa3ed5f4f6211e784eda596f22af7aaaab1edd3c08c25303b28c2bbdde90d547",
+      "screenshot": "docs/ui-reconstruction/github-pr-reference/screenshots/primer-home.png",
+      "sha256": "e636a3d5a1509ba02274f07166f807a4cdcbf370185683c5d4f8e3d84475ca97",
+      "png_dimensions": {
+        "width": 1215,
+        "height": 1279
+      }
+    },
+    {
+      "label": "primer-product-ui",
+      "url": "https://primer.style/product/",
+      "evidence_id": "ev_734c2528580342787fbca75832d40db39bc2fadab3a65b08d2a9ed9e8b89fd10",
+      "screenshot_evidence_id": "ev_e6de29473fd498e4257c73427e1aa8e54c1bf9e0288bcd7391710e146744fa69",
+      "screenshot": "docs/ui-reconstruction/github-pr-reference/screenshots/primer-product-ui.png",
+      "sha256": "a469fd4123b4f5e60cd6c36607321af9e5516091ee020cee510bd55a67340584",
+      "png_dimensions": {
+        "width": 1215,
+        "height": 1279
+      }
+    },
+    {
+      "label": "primer-color",
+      "url": "https://primer.style/product/primitives/color/",
+      "evidence_id": "ev_61b1803c2ed0f281a073c6eac564201149ca541a308e4761c075fd0bee8d7c57",
+      "screenshot_evidence_id": "ev_002448c141df29ab1741522a03764736d079c8262156b798f56582367691c96b",
+      "screenshot": "docs/ui-reconstruction/github-pr-reference/screenshots/primer-color.png",
+      "sha256": "52daa51860e07d64eb03df60019c6566304366adcaf5fbeaebb41dfd3c595633",
+      "png_dimensions": {
+        "width": 1215,
+        "height": 1279
+      }
+    },
+    {
+      "label": "primer-typography-loaded",
+      "url": "https://primer.style/product/primitives/typography/",
+      "evidence_id": "ev_ea137841856f9191e341ecede9ad7e6358b47530c378c531c3f447b998017f17",
+      "screenshot_evidence_id": "ev_98c4bbbab4379964610268e989f4e75d9be1fd2e7b954deeb8b6914a60af6c81",
+      "screenshot": "docs/ui-reconstruction/github-pr-reference/screenshots/primer-typography-loaded.png",
+      "sha256": "09ed361faaaa63553fa58e9146fe5cd49788a632f58207d28b7e2780875f7f41",
+      "png_dimensions": {
+        "width": 1215,
+        "height": 1279
+      }
+    },
+    {
+      "label": "primer-size",
+      "url": "https://primer.style/product/primitives/size/",
+      "evidence_id": "ev_45ba30c7602a8b174dd7e08d7d88b446069ecc505b7eb055093e7f2f0f393bc3",
+      "screenshot_evidence_id": "ev_e29bce487128fe9cf6fe6c689acafb3201762a1ce1b081ab83a62e2f7195501a",
+      "screenshot": "docs/ui-reconstruction/github-pr-reference/screenshots/primer-size.png",
+      "sha256": "4f57140a7e2ea24e2887199e3fa6567623d62a1f9d4b3f45b4f8b3e22afec2b2",
+      "png_dimensions": {
+        "width": 1215,
+        "height": 1279
+      }
+    },
+    {
+      "label": "primer-underline-navigation",
+      "url": "https://primer.style/product/components/underline-nav/",
+      "evidence_id": "ev_cc5c679f49ef4fb5b886b1d6c9c96cba8b4bb4ba3bf688a1c2b54bc5ac860d60",
+      "screenshot_evidence_id": "ev_51d334011d4555c9942c775e6c592522da8daeedccdf5111379573ec6bcc37c2",
+      "screenshot": "docs/ui-reconstruction/github-pr-reference/screenshots/primer-underline-navigation.png",
+      "sha256": "3b1d2f27d978d66eda7f77b7340cdea982fd68c9a6e00179c6deffa177238f68",
+      "png_dimensions": {
+        "width": 1215,
+        "height": 1279
+      }
+    },
+    {
+      "label": "primer-buttons",
+      "url": "https://primer.style/product/components/button/",
+      "evidence_id": "ev_4301745cb3a532efc436d5d030c74cfeed0e5e026c0dad7d76a739b444a7b801",
+      "screenshot_evidence_id": "ev_c2f0e98ab0eb33ceab2e9851e6c27a8aecc963ea9fb897fb620ba01d32cf8052",
+      "screenshot": "docs/ui-reconstruction/github-pr-reference/screenshots/primer-buttons.png",
+      "sha256": "b6574835c6cebf536a030799a79a0aed7a250ee2f99bd2c9e3b3e50b93c5b217",
+      "png_dimensions": {
+        "width": 1215,
+        "height": 1279
+      }
+    },
+    {
+      "label": "primer-form-controls",
+      "url": "https://primer.style/product/components/form-control/",
+      "evidence_id": "ev_dba2a356f72eab34118e76ce04c12e2ec1938506222a5ecd4cad88e14b518c6c",
+      "screenshot_evidence_id": "ev_808fe4bea1e985ec1f9efc38a69acce85836ad80b723adac61815d81dbe02c22",
+      "screenshot": "docs/ui-reconstruction/github-pr-reference/screenshots/primer-form-controls.png",
+      "sha256": "07000d5ab8ef721d744f3e23af04ad017ba4f148c5346449dad306d90cc73896",
+      "png_dimensions": {
+        "width": 1215,
+        "height": 1279
+      }
+    },
+    {
+      "label": "primer-responsive-guidance",
+      "url": "https://primer.style/product/getting-started/foundations/responsive/",
+      "evidence_id": "ev_5d7f3b7479e2bbc91b2ffd83c1d998e23f48832451f82e6fd876751fdbcebb1a",
+      "screenshot_evidence_id": "ev_e7b2c843a9f89f85b7edbad26ba2ff00ea7c768f606921f80f678cc1b80d98a5",
+      "screenshot": "docs/ui-reconstruction/github-pr-reference/screenshots/primer-responsive-guidance.png",
+      "sha256": "672291cbb7b614babda81f8b77693bdb8a789de3c2eab9ab7abf18448a77d531",
+      "png_dimensions": {
+        "width": 1215,
+        "height": 1279
+      }
+    },
+    {
+      "label": "primer-loading",
+      "url": "https://primer.style/product/ui-patterns/loading/",
+      "evidence_id": "ev_77955de9705213a84e11beb8f35784d74ba439a2d8f90460da0ed4011c376f40",
+      "screenshot_evidence_id": "ev_cdddf4c78704495e991ab87bbea85384196f726b7968ba87c21f2261a0201e78",
+      "screenshot": "docs/ui-reconstruction/github-pr-reference/screenshots/primer-loading.png",
+      "sha256": "4eade70a4ad81fd7c442fa22ed149801763ddd44f85b1eca3e7e6971ad10cefc",
+      "png_dimensions": {
+        "width": 1215,
+        "height": 1279
+      }
+    },
+    {
+      "label": "primer-empty-states",
+      "url": "https://primer.style/product/ui-patterns/empty-states/",
+      "evidence_id": "ev_561d3b2fc9d85885e77a734cfb2177030d80f8e4c591283a0d76046753254c05",
+      "screenshot_evidence_id": "ev_88aa624f71601540490f2e10dfe821373fadd51da0fef4daa7d74aff52de2ecc",
+      "screenshot": "docs/ui-reconstruction/github-pr-reference/screenshots/primer-empty-states.png",
+      "sha256": "7d672180e4309697fb46cfb3484133c0dcef791c8cbcb2c6a35b63eaaf1154d8",
+      "png_dimensions": {
+        "width": 1215,
+        "height": 1279
+      }
+    },
+    {
+      "label": "primer-mobile-pattern",
+      "url": "https://primer.style/product/ui-patterns/empty-states/",
+      "evidence_id": "ev_561d3b2fc9d85885e77a734cfb2177030d80f8e4c591283a0d76046753254c05",
+      "screenshot_evidence_id": "ev_2873dd13f55d18c63d0ba304cf03247ffce1b5b34187243b1fa80e8c30a21207",
+      "screenshot": "docs/ui-reconstruction/github-pr-reference/screenshots/primer-mobile-pattern.png",
+      "sha256": "38b39634da5cb0fca43c5bd8f8ab7030988e360acc11432b1fa0c2c78a602332",
+      "png_dimensions": {
+        "width": 488,
+        "height": 1055
+      },
+      "css_viewport": {
+        "width": 390,
+        "height": 844
+      }
+    }
+  ],
+  "accessibility_only": [
+    {
+      "evidence_id": "ev_f10afab04ef0ef1599476058a28ee5841dc0c2aa00f6df7175d65b46f14725af",
+      "url": "https://github.com/microsoft/vscode/pull/342101",
+      "finding": "Human requested-changes event and original-review hash verified in the accessibility tree."
+    }
+  ],
+  "limits": [
+    "Signed-out public views: no review submission, line-comment posting, assignment edits, merge, or private logs tested.",
+    "Computed browser CSS and full responsive breakpoints were not measured; exact Paper-Format dimensions below are proposed choices."
+  ]
+}

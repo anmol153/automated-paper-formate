@@ -15,10 +15,11 @@ const { api } = await server.ssrLoadModule("./src/lib/api.js");
 const { AuthProvider } = await server.ssrLoadModule("./src/context/AuthContext.jsx");
 const SubmissionDetail = (await server.ssrLoadModule("./src/pages/SubmissionDetail.jsx")).default;
 const PaperConversation = (await server.ssrLoadModule("./src/components/PaperConversation.jsx")).default;
-let calls, role, history, paper, workflow, threads, failConversation, failWorkflow, failUpload, failRecheck;
+let calls, role, history, paper, workflow, threads, reviewData, failConversation, failWorkflow, failUpload, failRecheck;
 const revision = (id, number) => ({ revision_id: id, number, filename: `paper-${number}.pdf`, size_bytes: 500, sha256: "abc123", uploaded_at: "2026-10-19T08:00:00Z", uploaded_by: "Author", metadata: { title: "Reproducible research workflows", authors: ["Alex Researcher"] }, latest_check: { status: "passed_with_warnings" }, change_summary: `Revision ${number} change summary`, template_id: "template-1" });
 function reset() {
   calls = []; role = "author"; failConversation = failWorkflow = failUpload = failRecheck = false;
+  reviewData = { is_chair: false, reviews: [] };
   // Deliberately unsorted: the current pointer, rather than array order, is authoritative.
   history = { revisions: [revision("r1", 1), revision("r2", 2)], current_revision_id: "r2", can_upload_revision: true, can_recheck: true };
   paper = { submission_id: "paper", conference_id: "demo", paper_number: 42, title: "Reproducible research workflows", abstract: "A practical approach to reproducible scientific collaboration.", authors: [{ name: "Alex Researcher", affiliation: "Research Institute" }], status: "draft", metadata_version: 1, filename: "paper.pdf" };
@@ -47,12 +48,13 @@ api.defaults.adapter = async (config) => {
   else if (path.endsWith("/comments/c1") && method === "delete") { threads[0].comments[0].deleted_at = "2026-10-19T09:00:00Z"; data = {}; }
   else if (path.endsWith("/conversation/t1") && method === "patch") { threads[0].resolved = body().resolved; data = {}; }
   else if (path.endsWith("/transitions")) { paper.status = workflow.status = body().target_status; workflow.actions = []; data = paper; }
-  else if (path.endsWith("/reviews")) data = { is_chair: false, reviews: [] };
+  else if (path.endsWith("/reviews")) data = reviewData;
+  else if (path.endsWith("/reviews/mine") && method === "put") data = {};
   else throw new Error(`Unexpected ${method} ${path}`);
   return { data: structuredClone(data), config, headers: {}, status: 200, statusText: "OK" };
 };
 async function flush() { for (let i = 0; i < 5; i++) await act(async () => { await new Promise((resolve) => setTimeout(resolve, 5)); }); }
-async function mount(query = "") {
+async function mount(query = "?tab=overview") {
   const container = document.createElement("div"); document.body.appendChild(container); const root = createRoot(container); let location;
   function Probe() { location = useLocation(); return null; }
   await act(async () => root.render(React.createElement(AuthProvider, null, React.createElement(MemoryRouter, { initialEntries: [`/submissions/paper${query}`] }, React.createElement(Routes, null, React.createElement(Route, { path: "/submissions/:submissionId", element: React.createElement(SubmissionDetail) })), React.createElement(Probe))))); await flush();
@@ -89,7 +91,7 @@ try {
     const view = await mount("?tab=conversation"); try { await click(view, "Reply to this comment"); await text(view.container.querySelector("article form textarea"), "A threaded response"); await click(view, "Post reply"); assert.equal(JSON.parse(calls.find((call) => call.url.endsWith("/comments") && call.method === "post").data).parent_comment_id, "c1"); await act(async () => [...view.container.querySelectorAll("article button")].find((node) => node.textContent === "Edit").click()); await flush(); await text(view.container.querySelector("article textarea"), "Updated feedback"); await click(view, "Save comment"); assert.equal(JSON.parse(calls.find((call) => call.method === "patch" && call.url.endsWith("/comments/c1")).data).expected_version, 1); await click(view, "Resolve thread"); assert.match(view.container.querySelector("article").getAttribute("aria-label"), /^Resolved/); await click(view, "Reopen thread"); assert.equal(threads[0].resolved, false); } finally { await view.close(); }
   });
   await test("current workflow transitions retain status/revision concurrency guards", async () => {
-    const view = await mount("?revision=r1"); try { await choose(view.container.querySelector(".pf-paper-workflow select"), "submitted"); await click(view, "Apply action"); assert.deepEqual(JSON.parse(calls.find((call) => call.url.endsWith("/transitions")).data), { target_status: "submitted", expected_status: "draft", expected_revision_id: "r2", reason: "" }); assert.match(view.container.querySelector("header").textContent, /Submitted/); } finally { await view.close(); }
+    const view = await mount("?tab=overview&revision=r1"); try { await choose(view.container.querySelector(".pf-paper-workflow select"), "submitted"); await click(view, "Apply action"); assert.deepEqual(JSON.parse(calls.find((call) => call.url.endsWith("/transitions")).data), { target_status: "submitted", expected_status: "draft", expected_revision_id: "r2", reason: "" }); assert.match(view.container.querySelector("header").textContent, /Submitted/); } finally { await view.close(); }
   });
   await test("workflow failure has an explicit retry and never reports ready", async () => {
     failWorkflow = true; const view = await mount(); try { assert.match(view.container.textContent, /Workflow summary unavailable/); assert.ok(!view.container.textContent.includes("Ready for the next")); failWorkflow = false; await click(view, "Reload workflow"); assert.match(view.container.textContent, /Ready for the next review step/); assert.ok(!view.container.querySelector('[role="alert"]')); } finally { await view.close(); }
@@ -113,7 +115,63 @@ try {
     failRecheck = true; const view = await mount("?tab=checks&revision=r1"); try { await click(view, "Run checks again"); assert.match(view.container.textContent, /Check unavailable/); failRecheck = false; await click(view, "Run checks again"); assert.ok(!view.container.querySelector('[role="alert"]')); const sent = calls.filter((call) => call.method === "post" && call.url === "/submissions/paper/check-compliance"); assert.equal(sent.length, 2); assert.equal(JSON.parse(sent[0].data).revision_id, "r1"); } finally { await view.close(); }
   });
   await test("metadata editing preserves current revision and version concurrency guards", async () => {
-    const view = await mount("?revision=r1"); try { const editor = view.container.querySelector(".pf-paper-metadata-editor"); assert.equal(editor.open, false); await act(async () => editor.querySelector("summary").click()); await text(editor.querySelector("input"), "Updated title"); await click(view, "Save paper details"); const sent = JSON.parse(calls.find((call) => call.url.endsWith("/metadata") && call.method === "put").data); assert.equal(sent.title, "Updated title"); assert.equal(sent.expected_revision_id, "r2"); assert.equal(sent.expected_version, 1); } finally { await view.close(); }
+    const view = await mount("?tab=overview&revision=r1"); try { const editor = view.container.querySelector(".pf-paper-metadata-editor"); assert.equal(editor.open, false); await act(async () => editor.querySelector("summary").click()); await text(editor.querySelector("input"), "Updated title"); await click(view, "Save paper details"); const sent = JSON.parse(calls.find((call) => call.url.endsWith("/metadata") && call.method === "put").data); assert.equal(sent.title, "Updated title"); assert.equal(sent.expected_revision_id, "r2"); assert.equal(sent.expected_version, 1); } finally { await view.close(); }
+  });
+  await test("discussion filters use returned counts and preserve an unsent draft", async () => {
+    const view = await mount("?tab=conversation"); try {
+      const draft = view.container.querySelector(".pf-conversation-composer textarea"); await text(draft, "Keep this draft while filtering");
+      const filters = view.container.querySelector('[aria-label="Filter discussions"]');
+      assert.match(filters.textContent, /All1Unresolved1Resolved0/);
+      await act(async () => filters.querySelectorAll("button")[2].click()); await flush();
+      assert.equal(view.container.querySelectorAll("article").length, 0); assert.match(view.container.textContent, /No resolved discussions/);
+      assert.equal(draft.value, "Keep this draft while filtering");
+      await click(view, "Show all discussions"); assert.equal(view.container.querySelectorAll("article").length, 1);
+      assert.equal(calls.filter((call) => call.method === "post").length, 0);
+    } finally { await view.close(); }
+  });
+  await test("closed review phase overrides readiness and disables review transitions", async () => {
+    workflow.status = paper.status = "submitted"; workflow.review_phase_open = false; workflow.actions = ["under_review"];
+    const view = await mount(); try {
+      assert.match(view.container.textContent, /Review phase closed/); assert.ok(!view.container.textContent.includes("Ready for the next review step"));
+      await choose(view.container.querySelector(".pf-paper-workflow select"), "under_review"); assert.equal(button(view, "Apply action").disabled, true);
+    } finally { await view.close(); }
+  });
+  await test("shared navigation exposes the actual revision count and active destination", async () => {
+    const view = await mount(); try {
+      const nav = view.container.querySelector('[aria-label="Submission sections"]'); assert.ok(nav.classList.contains("pf-underline-nav"));
+      const files = nav.querySelector('a[href*="tab=files"]'); assert.equal(files.querySelector(".pf-counter").textContent, "2");
+      assert.equal(view.container.querySelector('.pf-paper-tools [aria-current="page"]').textContent, "Overview");
+    } finally { await view.close(); }
+  });
+  await test("paper opens on a PR conversation with a summary and immutable revision events", async () => {
+    history.revisions.reverse();
+    const view = await mount(""); try {
+      assert.equal(view.container.querySelector('.pf-paper-tabs [aria-current="page"]').textContent, "Conversation");
+      assert.equal(view.container.querySelectorAll(".pf-paper-tabs a").length, 4);
+      assert.match(view.container.querySelector('[aria-label="Submission description"]').textContent, /A practical approach/);
+      assert.equal(view.container.querySelectorAll(".pf-pr-revision-event").length, 2);
+      assert.match(view.container.querySelector(".pf-pr-revision-event a").getAttribute("href"), /tab=files&revision=r1/);
+      assert.ok(!view.container.querySelector(".pf-paper-workflow"));
+      const reply = view.container.querySelector(".pf-thread-reply"); assert.equal(reply.open, false);
+      await click(view, "Reply to this comment"); assert.equal(reply.open, true); assert.equal(document.activeElement.tagName, "TEXTAREA");
+    } finally { await view.close(); }
+  });
+  await test("formal review keeps the PR sidebar, revision guard and existing draft payload", async () => {
+    role = "reviewer"; paper.status = workflow.status = "under_review"; history.can_upload_revision = false; workflow.actions = [];
+    reviewData = { is_chair: false, reviews: [], can_review: true, assignment_id: "a1", revision_id: "r2", own_review: null, configuration: { form_id: "form1", policy: {}, form: { name: "Research review", recommendations: ["Accept", "Reject"], criteria: [{ id: "quality", label: "Technical quality", kind: "score", minimum: 1, maximum: 5, required: true, visibility: "authors" }] } } };
+    let view = await mount("?tab=reviews&revision=r1"); try {
+      assert.ok(view.container.querySelector("aside")); assert.ok(view.container.querySelector(".pf-pr-formal-reviews"));
+      assert.equal(view.container.querySelector("fieldset").disabled, true);
+    } finally { await view.close(); }
+    view = await mount("?tab=reviews"); try {
+      assert.equal(view.container.querySelector("fieldset").disabled, false);
+      assert.equal(view.container.querySelector(".pf-pr-conflict-disclosure").open, false);
+      await choose(view.container.querySelector(".pf-pr-review-editor select"), "Accept");
+      await text(view.container.querySelector('input[type="number"]'), "4");
+      await click(view, "Save private draft");
+      const payload = JSON.parse(calls.find((call) => call.url.endsWith("/reviews/mine")).data);
+      assert.equal(payload.revision_id, "r2"); assert.equal(payload.assignment_id, "a1"); assert.equal(payload.form_id, "form1"); assert.equal(payload.submit, false); assert.equal(payload.expected_version, 0); assert.equal(payload.answers.quality, 4);
+    } finally { await view.close(); }
   });
   console.log(`${passed} D2 paper workspace scenarios passed.`);
 } finally { await server.close(); dom.window.close(); }

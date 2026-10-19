@@ -30,6 +30,7 @@ export default function SubmissionWorkflow({ submissionId, onChanged, onChairLoa
   }
   return <section className="panel p-5 space-y-4 pf-paper-workflow">
     <h2 className="text-lg font-semibold">Next actions</h2>
+    <p className="pf-paper-action-context">Actions apply to the current revision. Earlier uploads remain available for reference.</p>
     {error && <p role="alert" className="text-danger-600">{error} <button type="button" className="btn-secondary" disabled={busy} onClick={() => setRefresh((n) => n + 1)}>Reload actions</button></p>}
     {!workflow ? !error && <p role="status">Loading workflow…</p> : <>
       <p>{workflow.eligible ? "Formatting policy allows this revision to proceed to review." : workflow.reason}</p>
