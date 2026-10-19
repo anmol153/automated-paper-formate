@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MultiDropZone from "../components/MultiDropZone.jsx";
+import ConferenceChooser from "../components/ConferenceChooser.jsx";
+import FormattingWorkspace from "../components/layout/FormattingWorkspace.jsx";
+import { ButtonLink } from "../components/ui/Button.jsx";
 import {
   errorMessage,
   getDriveStatus,
@@ -89,16 +92,8 @@ export default function Submit() {
   }
 
   return (
-    <div className="animate-fade-in">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-surface-900 dark:text-surface-50">Submit papers</h1>
-        <p className="mt-2 max-w-2xl text-sm text-surface-600 dark:text-surface-400">
-          Check one paper or a whole batch against the venue's rules. Every paper is reported
-          separately, and a problem with one file never blocks the rest of the batch.
-        </p>
-      </header>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
+    <FormattingWorkspace title="Check papers" description="Check one manuscript or a batch against your venue's saved formatting rules." actions={<ButtonLink to="/setup">Manage templates →</ButtonLink>}>
+      <div className="pf-format-intake-layout"><form onSubmit={handleSubmit} className="space-y-6 pf-format-intake-form">
         <section className="panel animate-slide-up" aria-labelledby="template-heading">
           <h2 id="template-heading" className="panel-title">Venue template</h2>
           {templates.length === 0 ? (
@@ -218,7 +213,7 @@ export default function Submit() {
               className="btn-primary min-w-[180px]"
             >
               {busy
-                ? "Checking&hellip;"
+                ? "Checking…"
                 : mode === "files"
                 ? `Check ${files.length} paper${files.length === 1 ? "" : "s"}`
                 : "Check Drive folder"}
@@ -245,7 +240,7 @@ export default function Submit() {
         </div>
       </form>
 
-      <div className="alert alert-warning animate-fade-in" role="note">
+      <aside className="pf-format-aside"><ConferenceChooser /><div className="alert alert-warning animate-fade-in" role="note">
         <div className="flex items-start gap-3">
           <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 shrink-0 mt-0.5" aria-hidden="true">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0111 6zm-1 8a.75.75 0 101.5 0H11.5a.75.75 0 000 1.5H10a.75.75 0 00-.75-.75z" clipRule="evenodd" />
@@ -255,8 +250,8 @@ export default function Submit() {
             <p className="mt-1">PDF, TEX and DOCX files are analyzed. Scanned PDFs without extractable text are not supported. Page counts for LaTeX and Word submissions are estimated, because those formats are not paginated until they are rendered; PDF page counts are exact.</p>
           </div>
         </div>
-      </div>
-    </div>
+      </div></aside></div>
+    </FormattingWorkspace>
   );
 }
 
@@ -330,7 +325,7 @@ function DrivePanel({
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-surface-700 dark:text-surface-300">
               {preview.usable_papers} paper{preview.usable_papers === 1 ? "" : "s"} found
-              {preview.skipped?.length ? ` &middot; ${preview.skipped.length} skipped` : ""}
+              {preview.skipped?.length ? ` · ${preview.skipped.length} skipped` : ""}
             </p>
           </div>
           {preview.files?.length > 0 && (

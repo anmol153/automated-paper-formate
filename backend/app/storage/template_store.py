@@ -76,10 +76,8 @@ def default_db_path() -> Path:
     makes the data survive a redeploy on a platform with an ephemeral
     filesystem.
     """
-    override = os.environ.get(DB_PATH_ENV, "").strip()
-    if override:
-        return Path(override).expanduser()
-    return DEFAULT_STORE_DIR / DB_FILENAME
+    from .database import configured_path
+    return configured_path(DEFAULT_STORE_DIR / DB_FILENAME, DB_PATH_ENV)
 
 
 class TemplateStore:
@@ -103,6 +101,8 @@ class TemplateStore:
             else:
                 self.db_path = path / DB_FILENAME
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        from .database import initialize_if_empty
+        initialize_if_empty(self.db_path)
         self.directory = self.db_path.parent
         self._local = threading.local()
         with self._connect() as conn:
@@ -202,6 +202,18 @@ class TemplateStore:
             (rules.name, rules.model_dump_json(), _now(), rules.template_id),
         )
         return rules
+
+    def create_owned(self, rules, user_id):
+        from .database import transaction
+        with transaction(self):
+            saved = self.create(rules)
+            self._connect().execute("INSERT INTO template_owners VALUES (?,?)", (saved.template_id, user_id))
+            return saved
+
+    def owned_by(self, template_id, user_id):
+        from .database import require_security_schema
+        require_security_schema(self._connect())
+        return bool(self._connect().execute("SELECT 1 FROM template_owners WHERE template_id=? AND user_id=?", (template_id, user_id)).fetchone())
 
     def delete(self, template_id: str) -> None:
         cursor = self._connect().execute(

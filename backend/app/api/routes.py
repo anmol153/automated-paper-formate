@@ -3,9 +3,12 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
+from app.auth import get_current_user_id, get_optional_user_id
+from app.security.files import read_upload, validate_document
+from app.config import get_settings
 from app.checks.engine import assess
 from app.checks.submission import MAX_BATCH_SIZE, assess_batch
 from app.comparator.comparator import run_comparison
@@ -72,9 +75,8 @@ class GoogleDocRequest(BaseModel):
 
 
 async def _read_file(upload: UploadFile) -> bytes:
-    data = await upload.read()
-    if not data:
-        raise ParseError(f"Uploaded file '{upload.filename}' is empty.")
+    data = await read_upload(upload)
+    validate_document(data, upload.filename)
     return data
 
 
@@ -91,6 +93,11 @@ def _load_rules(template_id: Optional[str], inline: Optional[RuleSet]) -> RuleSe
         return get_store().get(template_id)
     except TemplateNotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+def _require_google_access(user_id):
+    if auth_mode() == "service-account" and user_id not in get_settings().google_import_user_ids:
+        raise HTTPException(status_code=403, detail="This account is not authorized to use server-side Google credentials")
 
 
 def _drive_unavailable(exc: Exception) -> HTTPException:
@@ -171,11 +178,11 @@ async def import_template(
 
 
 @router.post("/templates", response_model=RuleSet, status_code=201)
-def create_template(rules: RuleSet) -> RuleSet:
+def create_template(rules: RuleSet, user_id: str = Depends(get_current_user_id)) -> RuleSet:
     """Persist a rule set as a selectable publisher template."""
     if not rules.name.strip() or rules.name == "Untitled template":
         raise HTTPException(status_code=422, detail="A template name is required.")
-    return get_store().create(rules)
+    return get_store().create_owned(rules, user_id)
 
 
 @router.get("/templates/{template_id}", response_model=RuleSet)
@@ -187,7 +194,9 @@ def get_template(template_id: str) -> RuleSet:
 
 
 @router.put("/templates/{template_id}", response_model=RuleSet)
-def update_template(template_id: str, rules: RuleSet) -> RuleSet:
+def update_template(template_id: str, rules: RuleSet, user_id: str = Depends(get_current_user_id)) -> RuleSet:
+    if not get_store().owned_by(template_id, user_id):
+        raise HTTPException(status_code=403, detail="Template owner permission required")
     try:
         existing = get_store().get(template_id)
     except TemplateNotFound as exc:
@@ -197,7 +206,9 @@ def update_template(template_id: str, rules: RuleSet) -> RuleSet:
 
 
 @router.delete("/templates/{template_id}")
-def delete_template(template_id: str) -> dict:
+def delete_template(template_id: str, user_id: str = Depends(get_current_user_id)) -> dict:
+    if not get_store().owned_by(template_id, user_id):
+        raise HTTPException(status_code=403, detail="Template owner permission required")
     try:
         get_store().delete(template_id)
     except TemplateNotFound as exc:
@@ -236,6 +247,7 @@ async def compare(
     template: UploadFile | None = File(default=None),
     paper: UploadFile | None = File(default=None),
     demo: bool = Form(False),
+    user_id: str | None = Depends(get_optional_user_id),
 ) -> ComplianceReport:
     if demo:
         template_data, paper_data = demo_documents()
@@ -257,12 +269,13 @@ async def compare(
             paper.filename,
         )
         # Persist non-demo comparisons
-        if not demo:
+        if not demo and user_id:
             try:
-                get_report_store().save(
+                get_report_store().save_for_user(
                     filename=paper.filename or "paper",
                     report=report.model_dump(),
                     kind="comparison",
+                    user_id=user_id,
                 )
             except Exception:
                 logger.exception("Failed to persist comparison report")
@@ -286,6 +299,7 @@ async def submit_papers(
     files: list[UploadFile] = File(...),
     template_id: Optional[str] = Form(None),
     rules: Optional[str] = Form(None),
+    user_id: str | None = Depends(get_optional_user_id),
 ) -> SubmissionReport:
     """Check one or many uploaded papers against a publisher template.
 
@@ -312,7 +326,7 @@ async def submit_papers(
 
     papers: list[tuple[str, bytes]] = []
     for upload in files:
-        data = await upload.read()
+        data = await read_upload(upload, remaining=get_settings().max_batch_bytes - sum(len(item[1]) for item in papers), allow_empty=True)
         papers.append((upload.filename or "unnamed", data))
 
     if not papers:
@@ -335,11 +349,13 @@ async def submit_papers(
                 needs_review=1 if paper_assessment.verdict == "needs_review" else 0,
                 generated_at=report.generated_at,
             )
-            store.save(
-                filename=paper_assessment.filename,
-                report=single_report.model_dump(),
-                kind="submission",
-            )
+            if user_id:
+                store.save_for_user(
+                    filename=paper_assessment.filename,
+                    report=single_report.model_dump(),
+                    kind="submission",
+                    user_id=user_id,
+                )
     except Exception:
         logger.exception("Failed to persist submission reports")
 
@@ -347,7 +363,8 @@ async def submit_papers(
 
 
 @router.post("/submissions/drive", response_model=SubmissionReport)
-def submit_from_drive(request: DriveSubmissionRequest) -> SubmissionReport:
+def submit_from_drive(request: DriveSubmissionRequest, user_id: str = Depends(get_current_user_id)) -> SubmissionReport:
+    _require_google_access(user_id)
     """Fetch every paper in a Google Drive folder and check them in one batch."""
     rules = _load_rules(request.template_id, request.rules)
     try:
@@ -374,9 +391,13 @@ def submit_from_drive(request: DriveSubmissionRequest) -> SubmissionReport:
 
     papers: list[tuple[str, bytes]] = []
     errors: list[str] = []
-    for drive_file in candidates:
+    for drive_file in candidates[:MAX_BATCH_SIZE]:
         try:
+            if drive_file.size > get_settings().max_upload_bytes:
+                raise ValueError("Drive file exceeds the configured byte limit")
             name, data = download(drive_file, target_extension="pdf" if drive_file.is_google_doc else None)
+            if sum(len(item[1]) for item in papers) + len(data) > get_settings().max_batch_bytes:
+                raise HTTPException(status_code=413, detail="Drive batch exceeds the configured byte limit")
             papers.append((name, data))
         except Exception as exc:
             errors.append(f"{drive_file.name}: {exc}")
@@ -406,11 +427,13 @@ def submit_from_drive(request: DriveSubmissionRequest) -> SubmissionReport:
                 needs_review=1 if paper_assessment.verdict == "needs_review" else 0,
                 generated_at=report.generated_at,
             )
-            store.save(
-                filename=paper_assessment.filename,
-                report=single_report.model_dump(),
-                kind="submission",
-            )
+            if user_id:
+                store.save_for_user(
+                    filename=paper_assessment.filename,
+                    report=single_report.model_dump(),
+                    kind="submission",
+                    user_id=user_id,
+                )
     except Exception:
         logger.exception("Failed to persist drive submission reports")
 
@@ -418,7 +441,8 @@ def submit_from_drive(request: DriveSubmissionRequest) -> SubmissionReport:
 
 
 @router.post("/submissions/google-doc", response_model=SubmissionReport)
-def submit_from_google_doc(request: GoogleDocRequest) -> SubmissionReport:
+def submit_from_google_doc(request: GoogleDocRequest, user_id: str = Depends(get_current_user_id)) -> SubmissionReport:
+    _require_google_access(user_id)
     """Check a single Google Doc by URL (exported to PDF first)."""
     from app.google.docs_client import fetch_document
     from app.parsing.normalizer import parse_google_doc
@@ -453,10 +477,11 @@ def submit_from_google_doc(request: GoogleDocRequest) -> SubmissionReport:
 
     # Persist the single paper report
     try:
-        get_report_store().save(
+        get_report_store().save_for_user(
             filename=assessment.filename,
             report=report.model_dump(),
             kind="submission",
+            user_id=user_id,
         )
     except Exception:
         logger.exception("Failed to persist google-doc submission report")
@@ -470,10 +495,10 @@ def submit_from_google_doc(request: GoogleDocRequest) -> SubmissionReport:
 
 
 @router.get("/reports")
-def list_reports() -> dict:
+def list_reports(user_id: str = Depends(get_current_user_id)) -> dict:
     """List all stored reports, most recent first."""
     try:
-        reports = get_report_store().list()
+        reports = get_report_store().list_for_user(user_id)
         return {"reports": reports}
     except Exception:
         logger.exception("Failed to list reports")
@@ -481,10 +506,10 @@ def list_reports() -> dict:
 
 
 @router.get("/reports/{filename:path}")
-def get_report(filename: str) -> dict:
+def get_report(filename: str, user_id: str = Depends(get_current_user_id)) -> dict:
     """Get a full stored report by filename."""
     try:
-        report = get_report_store().get(filename)
+        report = get_report_store().get(get_report_store().private_key(filename, user_id))
         return report
     except ReportNotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -494,10 +519,10 @@ def get_report(filename: str) -> dict:
 
 
 @router.delete("/reports/{filename:path}")
-def delete_report(filename: str) -> dict:
+def delete_report(filename: str, user_id: str = Depends(get_current_user_id)) -> dict:
     """Delete a stored report by filename."""
     try:
-        get_report_store().delete(filename)
+        get_report_store().delete(get_report_store().private_key(filename, user_id))
         return {"deleted": filename}
     except ReportNotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -521,7 +546,8 @@ def drive_status() -> dict:
 
 
 @router.post("/drive/preview")
-def drive_preview(request: DrivePreviewRequest) -> dict:
+def drive_preview(request: DrivePreviewRequest, user_id: str = Depends(get_current_user_id)) -> dict:
+    _require_google_access(user_id)
     """List what a Drive folder contains, so a submitter can confirm before checking."""
     try:
         folder_id = extract_folder_id(request.folder_url)

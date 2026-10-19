@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DropZone from "../components/DropZone.jsx";
 import { compareDemo, compareDocuments, errorMessage } from "../lib/api.js";
+import FormattingWorkspace from "../components/layout/FormattingWorkspace.jsx";
+import { ButtonLink } from "../components/ui/Button.jsx";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -54,17 +56,9 @@ export default function Home() {
   }
 
   return (
-    <div className="animate-fade-in max-w-3xl mx-auto">
-      <header className="mb-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-surface-900 dark:text-surface-50">Check a paper against a template</h1>
-        <p className="mt-3 max-w-2xl mx-auto text-sm text-surface-600 dark:text-surface-400">
-          Upload two documents. The template's formatting rules are extracted and compared against the
-          research paper &mdash; page setup, typography, paragraph formatting and required sections.
-          PDF, LaTeX (TEX) and Word (DOCX) files are supported, in any combination.
-        </p>
-      </header>
+    <FormattingWorkspace title="Check a paper against a template" description="Upload a template and a manuscript to compare their available formatting properties." actions={<ButtonLink to="/reports">Saved reports →</ButtonLink>} className="pf-format-compare">
 
-      <form onSubmit={handleCompare} className="space-y-6">
+      <form onSubmit={handleCompare} className="pf-format-compare-form">
         <section className="panel animate-slide-up" aria-labelledby="template-heading">
           <div className="flex items-center justify-between mb-4">
             <h2 id="template-heading" className="panel-title">Template document</h2>
@@ -161,7 +155,7 @@ export default function Home() {
                 />
               </div>
               <span className="text-sm font-medium text-surface-500 tabular-nums dark:text-surface-400 w-10 text-right">
-                {progress > 0 && progress < 100 ? `${progress}%` : "Analyzing&hellip;"}
+                {progress > 0 && progress < 100 ? `${progress}%` : "Analyzing…"}
               </span>
             </div>
           )}
@@ -179,6 +173,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-    </div>
+    </FormattingWorkspace>
   );
 }

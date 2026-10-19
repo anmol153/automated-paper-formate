@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import RuleEditor from "../components/RuleEditor.jsx";
 import { emptyRuleSet } from "../lib/ruleOptions.js";
+import FormattingWorkspace from "../components/layout/FormattingWorkspace.jsx";
 import {
   createTemplate,
   deleteTemplate,
@@ -117,30 +118,11 @@ export default function Setup() {
   }
 
   return (
-    <div className="animate-fade-in">
-      <header className="section-header mb-8">
-        <div>
-          <h1 className="section-title">Template setup</h1>
-          <p className="section-subtitle">
-            Upload the venue's template and its formatting rules are inferred for you. Every
-            inferred value can be overridden before the rules are saved, and a blank value means
-            that rule is not checked at all.
-          </p>
-        </div>
-        <Link
-          to="/submit"
-          className="btn-secondary whitespace-nowrap"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          Go to submission
-        </Link>
-      </header>
+    <FormattingWorkspace title="Template setup" description="Import venue guidelines, review the inferred rules and save a template for paper checks." actions={<Link to="/submit" className="btn-secondary">Go to submission →</Link>}>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
+      <div className="pf-format-template-layout">
         <div className="space-y-6 lg:col-span-1">
-          <section className="panel animate-slide-up" aria-labelledby="import-heading">
+          <section id="import-template" className="panel animate-slide-up" aria-labelledby="import-heading">
             <h2 id="import-heading" className="panel-title">1. Import from a template file</h2>
             <div className="space-y-4">
               <Field label="Template file" hint="PDF, LaTeX, or Word document containing the venue's formatting guidelines.">
@@ -171,7 +153,7 @@ export default function Setup() {
             </div>
           </section>
 
-          <section className="panel animate-slide-up" aria-labelledby="saved-heading">
+          <section id="saved-templates" className="panel animate-slide-up" aria-labelledby="saved-heading">
             <h2 id="saved-heading" className="panel-title">2. Saved templates</h2>
             {templates.length === 0 ? (
               <div className="empty-state animate-fade-in">
@@ -199,7 +181,7 @@ export default function Setup() {
                       <p className="truncate text-xs text-surface-500 dark:text-surface-400">
                         {template.template_id}
                         {template.publisher?.conference_name
-                          ? ` &middot; ${template.publisher.conference_name}`
+                          ? ` · ${template.publisher.conference_name}`
                           : ""}
                       </p>
                     </div>
@@ -263,7 +245,7 @@ export default function Setup() {
             </div>
           )}
 
-          <section className="panel animate-slide-up" aria-labelledby="review-heading">
+          <section id="template-rules" className="panel animate-slide-up pf-format-rule-editor" aria-labelledby="review-heading">
             <h2 id="review-heading" className="panel-title">3. Review and override</h2>
             <RuleEditor rules={rules} onChange={setRules} disabled={busy} />
           </section>
@@ -280,7 +262,7 @@ export default function Setup() {
                 </div>
                 <div className="flex justify-between gap-4 py-2 border-b border-surface-200 dark:border-surface-800">
                   <dt className="text-surface-600 dark:text-surface-400">Blocking checks</dt>
-                  <dd className="font-medium text-danger-600 dark:text-danger-400 text-right">Fail = reject paper</dd>
+                  <dd className="font-medium text-danger-600 dark:text-danger-400 text-right">Blocking formatting failure</dd>
                 </div>
                 <div className="flex justify-between gap-4 py-2 border-b border-surface-200 dark:border-surface-800">
                   <dt className="text-surface-600 dark:text-surface-400">Warning checks</dt>
@@ -288,7 +270,7 @@ export default function Setup() {
                 </div>
                 <div className="flex justify-between gap-4 py-2">
                   <dt className="text-surface-600 dark:text-surface-400">Score threshold</dt>
-                  <dd className="font-medium text-primary-600 dark:text-primary-400 text-right">Minimum % to accept</dd>
+                  <dd className="font-medium text-primary-600 dark:text-primary-400 text-right">Minimum compliance score</dd>
                 </div>
               </dl>
             </div>
@@ -317,7 +299,7 @@ export default function Setup() {
           </div>
         </aside>
       </div>
-    </div>
+    </FormattingWorkspace>
   );
 }
 

@@ -8,8 +8,9 @@ export default function ThemeToggle() {
   const [dark, setDark] = useState(isDark);
 
   useEffect(() => {
-    const stored = localStorage.getItem("theme");
-    if (stored === "dark" || (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+    let stored;
+    try { stored = localStorage.getItem("theme"); } catch {}
+    if (stored === "dark" || (!stored && window.matchMedia?.("(prefers-color-scheme: dark)").matches)) {
       document.documentElement.classList.add("dark");
       setDark(true);
     } else {
@@ -42,7 +43,7 @@ export default function ThemeToggle() {
         stroke="currentColor"
         strokeWidth="1.8"
         className="h-5 w-5 transition-transform duration-300 ease-out"
-        style={{ transform: dark ? "rotate(90deg) scale(1)" : "rotate(-90deg) scale(0)" }}
+        style={{ transform: dark ? "rotate(90deg) scale(0)" : "rotate(0deg) scale(1)" }}
         aria-hidden="true"
       >
         <circle cx="12" cy="12" r="4" />

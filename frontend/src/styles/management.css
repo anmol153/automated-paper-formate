@@ -1,0 +1,185 @@
+/* Conference management surfaces: scoped to preserve the standalone checker. */
+.pf-management { color: var(--pf-text); font-family: var(--pf-font); font-size: 14px; line-height: 1.55; }
+.pf-management h1, .pf-management h2, .pf-management h3, .pf-management p { margin: 0; }
+.pf-management h1 { font-size: 28px; line-height: 1.25; font-weight: 650; letter-spacing: -.7px; overflow-wrap: anywhere; }
+.pf-management h2 { font-size: 16px; line-height: 1.4; font-weight: 650; }
+.pf-management h3 { font-size: 14px; font-weight: 650; }
+.pf-management p { color: var(--pf-muted); }
+.pf-management a:not(.pf-button) { color: var(--pf-accent); }
+.pf-management a:not(.pf-button):hover { text-decoration: underline; text-underline-offset: 3px; }
+.pf-management :is(a, button, input, textarea, select, summary):focus-visible { outline: 2px solid var(--pf-accent); outline-offset: 3px; }
+.pf-management-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin: 4px 0 28px; }
+.pf-management-header > div { min-width: 0; max-width: 780px; }
+.pf-management-header > .pf-button { flex-shrink: 0; }
+.pf-management-header h1 { margin: 6px 0 9px; }
+.pf-eyebrow { display: block; font-size: 11px; font-weight: 650; letter-spacing: 1.2px; color: var(--pf-muted); }
+.pf-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.pf-stack { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.pf-card { min-width: 0; border: 1px solid var(--pf-border); border-radius: 8px; background: var(--pf-surface); overflow: clip; }
+.pf-card-heading { padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--pf-border); }
+.pf-card-heading p { font-size: 12px; margin-top: 4px; }
+.pf-card-heading > a { flex-shrink: 0; font-size: 12px; font-weight: 600; }
+.pf-card-body { padding: 24px; }
+.pf-count { display: inline-flex; vertical-align: middle; padding: 2px 9px; border: 1px solid var(--pf-border); background: var(--pf-subtle); color: var(--pf-muted); border-radius: 20px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.pf-card-heading .pf-count { text-transform: capitalize; }
+.pf-empty { padding: 56px 24px; text-align: center; }
+.pf-empty p { max-width: 440px; margin: 10px auto 22px; }
+.pf-empty-symbol { display: inline-grid; place-items: center; width: 48px; height: 48px; background: var(--pf-selected); color: var(--pf-accent); border-radius: 12px; font-size: 24px; margin-bottom: 16px; }
+.pf-message { padding: 14px 18px; border: 1px solid var(--pf-border); border-radius: 6px; background: var(--pf-selected); margin-bottom: 20px; }
+.pf-message--error { color: var(--pf-danger); background: var(--pf-danger-bg); }
+.pf-message button { margin-left: 12px; }
+.pf-created { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pf-created button { margin-left: auto; }
+.pf-back-link { display: inline-block; margin: 0 0 20px; font-size: 12px; }
+.pf-stat-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-bottom: 28px; }
+.pf-stat-card { display: flex; flex-direction: column; padding: 22px 24px; border: 1px solid var(--pf-border); border-radius: 8px; background: var(--pf-surface); }
+.pf-management a.pf-stat-card { color: var(--pf-text); }
+.pf-management a.pf-stat-card:hover { text-decoration: none; border-color: var(--pf-accent); }
+.pf-stat-card > span { display: flex; justify-content: space-between; color: var(--pf-muted); font-size: 13px; }
+.pf-stat-card > span > span { color: var(--pf-accent); }
+.pf-stat-card strong { font-size: 36px; line-height: 1.3; font-weight: 600; letter-spacing: -1px; margin: 12px 0 8px; }
+.pf-stat-card small { color: var(--pf-muted); font-size: 12px; }
+.pf-dashboard-columns { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(290px, 1fr); gap: 24px; align-items: start; }
+.pf-directory-rows > a { display: flex; gap: 14px; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--pf-border); }
+.pf-directory-rows > a:last-child { border: 0; }
+.pf-directory-rows > a > div { flex: 1; min-width: 0; }
+.pf-directory-rows p { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 4px; }
+.pf-conference-monogram { width: 42px; height: 42px; flex: 0 0 42px; display: grid; place-items: center; background: var(--pf-selected); color: var(--pf-accent); font-size: 13px; border: 1px solid var(--pf-border); border-radius: 8px; font-weight: 650; }
+.pf-review-task + .pf-review-task { border-top: 1px solid var(--pf-border); padding-top: 20px; }
+.pf-review-task > a { display: block; font-weight: 600; margin: 6px 0; }
+.pf-review-task p { font-size: 12px; }
+.pf-quick-links { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 24px; gap: 20px; }
+.pf-quick-links > a { padding: 20px 0; border-top: 1px solid var(--pf-border); }
+.pf-quick-links strong, .pf-quick-links span { display: block; }
+.pf-quick-links span { margin-top: 6px; font-size: 12px; color: var(--pf-muted); }
+.pf-list-toolbar { padding: 20px 24px; display: flex; gap: 20px; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--pf-border); }
+.pf-list-toolbar p { margin-top: 5px; font-size: 12px; }
+.pf-list-toolbar h2 .pf-count { margin-left: 6px; }
+.pf-search { width: 280px; flex-shrink: 0; display: flex; align-items: center; border: 1px solid var(--pf-border); border-radius: 6px; background: var(--pf-canvas); }
+.pf-search svg { width: 17px; height: 17px; flex-shrink: 0; margin-left: 12px; color: var(--pf-muted); }
+.pf-search input { width: 100%; min-width: 0; padding: 8px 12px; border: 0; background: transparent; color: var(--pf-text); font: inherit; }
+.pf-conference-row { display: flex; gap: 16px; padding: 24px; align-items: center; border-bottom: 1px solid var(--pf-border); }
+.pf-conference-row:last-child { border-bottom: 0; }
+.pf-conference-description { flex: 1; min-width: 0; }
+.pf-conference-description h3 { font-size: 15px; }
+.pf-conference-description p { margin-top: 5px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; font-size: 13px; }
+.pf-row-actions { display: flex; align-items: center; gap: 20px; font-size: 12px; flex-shrink: 0; }
+.pf-table-footer { padding: 12px 24px; border-top: 1px solid var(--pf-border); color: var(--pf-muted); font-size: 12px; background: var(--pf-canvas); }
+.pf-help-strip { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 24px 0; color: var(--pf-muted); font-size: 12px; }
+.pf-help-strip strong { color: var(--pf-text); }
+.pf-help-strip a { margin-left: auto; }
+.pf-form-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 40px; align-items: start; }
+.pf-form-card { max-width: 800px; }
+.pf-form-card .pf-card-body { padding: 28px; gap: 26px; }
+.pf-step-label { font-size: 10px; color: var(--pf-muted); white-space: nowrap; letter-spacing: .7px; }
+.pf-form-field { display: block; font-size: 13px; font-weight: 600; }
+.pf-form-field > :is(input, textarea, select) { display: block; margin: 8px 0 0; width: 100%; padding: 9px 12px; border: 1px solid var(--pf-border); border-radius: 6px; background: var(--pf-surface); color: var(--pf-text); font: inherit; font-weight: 400; min-height: 38px; }
+.pf-form-field textarea { resize: vertical; }
+.pf-form-field > small { display: block; margin-top: 7px; color: var(--pf-muted); font-size: 12px; font-weight: 400; }
+.pf-form-field :disabled { opacity: .6; }
+.pf-form-footer { padding: 18px 24px; border-top: 1px solid var(--pf-border); background: var(--pf-canvas); display: flex; justify-content: flex-end; gap: 12px; }
+.pf-form-help { padding-top: 12px; }
+.pf-form-help h2 { font-size: 21px; margin: 12px 0; font-weight: 600; letter-spacing: -.4px; }
+.pf-form-help p { font-size: 13px; margin: 12px 0; }
+.pf-form-help ol { list-style: none; counter-reset: setup; padding: 0; margin: 28px 0; }
+.pf-form-help li { counter-increment: setup; position: relative; padding: 0 0 24px 36px; }
+.pf-form-help li::before { content: counter(setup); position: absolute; left: 0; top: 0; width: 23px; height: 23px; display: grid; place-items: center; border: 1px solid var(--pf-border); background: var(--pf-surface); border-radius: 50%; font-size: 11px; color: var(--pf-accent); }
+.pf-form-help li strong, .pf-form-help li span { display: block; }
+.pf-form-help li strong { font-size: 13px; font-weight: 600; }
+.pf-form-help li span { margin-top: 5px; font-size: 12px; color: var(--pf-muted); }
+.pf-form-help .pf-help-note { border-top: 1px solid var(--pf-border); padding-top: 18px; font-size: 12px; }
+.pf-workspace-tabs { display: flex; gap: 22px; border-bottom: 1px solid var(--pf-border); margin-bottom: 28px; overflow-x: auto; }
+.pf-management .pf-workspace-tabs a { padding: 12px 3px; white-space: nowrap; color: var(--pf-muted); border-bottom: 2px solid transparent; }
+.pf-management .pf-workspace-tabs a[aria-current] { color: var(--pf-accent); border-color: var(--pf-accent); font-weight: 600; }
+.pf-detail-list { margin: 0; }
+.pf-detail-list > div { display: flex; justify-content: space-between; gap: 16px; padding: 13px 0; border-bottom: 1px solid var(--pf-border); }
+.pf-detail-list dt { color: var(--pf-muted); font-size: 12px; }
+.pf-detail-list dd { margin: 0; font-size: 13px; text-align: right; }
+.pf-setup-links > a { display: flex; align-items: center; gap: 14px; padding: 20px; border-bottom: 1px solid var(--pf-border); }
+.pf-setup-links > a:last-child { border: 0; }
+.pf-setup-links > a > span:first-child { color: var(--pf-muted); font: 12px var(--pf-mono); }
+.pf-setup-links > a > span:last-child { margin-left: auto; }
+.pf-setup-links strong, .pf-setup-links small { display: block; }
+.pf-setup-links strong { font-size: 13px; }
+.pf-setup-links small { color: var(--pf-muted); font-size: 12px; margin-top: 4px; }
+.pf-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.pf-member-row { display: flex; gap: 12px; align-items: center; padding-bottom: 14px; border-bottom: 1px solid var(--pf-border); }
+.pf-member-row code { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 12px; }
+.pf-section-divider { border-top: 1px solid var(--pf-border); padding-top: 24px; }
+.pf-preserve-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+/* Reuse the existing working configuration editors, with management surfaces. */
+.pf-conference-content .panel { background: var(--pf-surface); border: 1px solid var(--pf-border); border-radius: 8px; padding: 24px; box-shadow: none; color: var(--pf-text); margin-bottom: 0; }
+.pf-conference-content .panel h2 { font-size: 16px; }
+.pf-conference-content .input-base { background: var(--pf-surface); border-color: var(--pf-border); border-radius: 6px; color: var(--pf-text); font-size: 13px; box-shadow: none; width: 100%; }
+.pf-conference-content .btn-secondary, .pf-conference-content .btn-primary { border-radius: 6px; font-size: 13px; min-height: 36px; box-shadow: none; }
+.pf-conference-content .btn-primary { background: var(--pf-accent); color: var(--pf-surface); }
+.pf-conference-content summary { padding: 10px 0; color: var(--pf-accent); }
+.pf-inline-configuration { padding: 8px 20px; }
+.pf-inline-configuration > summary { cursor: pointer; font-size: 13px; font-weight: 600; }
+.pf-inline-configuration > .pf-stack { padding: 10px 0; }
+.pf-paper-state { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.pf-paper-state small { color: var(--pf-muted); font-size: 12px; }
+/* Home: typographic introduction plus an honest workflow diagram. */
+.pf-home-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 20px; border-bottom: 1px solid var(--pf-border); font-size: 12px; }
+.pf-home-hero { padding: 64px 0; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(330px, 1fr); gap: 64px; align-items: center; }
+.pf-kicker { display: inline-block; color: var(--pf-accent); font-size: 12px; font-weight: 600; margin-bottom: 20px; }
+.pf-home-hero h1 { font-size: clamp(34px, 3.4vw, 52px); font-weight: 650; letter-spacing: -2px; line-height: 1.1; }
+.pf-home-hero > div > p { font-size: 15px; line-height: 1.8; margin: 22px 0 28px; max-width: 480px; }
+.pf-home-note { display: block; margin-top: 22px; color: var(--pf-muted); font-size: 12px; }
+.pf-home-diagram { border: 1px solid var(--pf-border); border-radius: 10px; background: var(--pf-surface); box-shadow: 0 10px 32px #1f232808; }
+.pf-diagram-heading { display: flex; align-items: center; gap: 8px; padding: 16px 20px; border-bottom: 1px solid var(--pf-border); font-size: 12px; font-weight: 600; }
+.pf-diagram-heading .pf-sidebar-dot { margin: 0; }
+.pf-diagram-step { display: flex; gap: 16px; margin: 26px 24px; align-items: center; }
+.pf-diagram-step > span { flex-shrink: 0; width: 34px; height: 34px; display: grid; place-items: center; background: var(--pf-selected); color: var(--pf-accent); border: 1px solid var(--pf-border); border-radius: 8px; font: 12px var(--pf-mono); }
+.pf-diagram-step p { font-size: 12px; margin-top: 5px; }
+.pf-diagram-footer { display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid var(--pf-border); padding: 12px 20px; color: var(--pf-muted); font-size: 10px; }
+.pf-home-features { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--pf-border); padding: 32px 0; gap: 32px; }
+.pf-home-features article { padding-right: 28px; border-right: 1px solid var(--pf-border); }
+.pf-home-features article:last-child { border: 0; padding-right: 0; }
+.pf-home-features h2 { font-size: 18px; font-weight: 600; letter-spacing: -.3px; margin: 12px 0; }
+.pf-home-features p { font-size: 13px; line-height: 1.7; margin-bottom: 18px; }
+.pf-home-features a { font-size: 12px; font-weight: 600; }
+.pf-home-bottom { border: 1px solid var(--pf-border); border-radius: 8px; padding: 24px 28px; display: flex; align-items: center; justify-content: space-between; gap: 20px; background: var(--pf-surface); }
+.pf-home-bottom p { font-size: 13px; margin-top: 5px; }
+@media (max-width: 1200px) {
+  .pf-home-hero { gap: 32px; }
+  .pf-home-hero h1 { font-size: 40px; }
+  .pf-form-layout { grid-template-columns: minmax(0, 1fr) 240px; gap: 24px; }
+}
+@media (max-width: 800px) {
+  .pf-dashboard-columns, .pf-form-layout { grid-template-columns: minmax(0, 1fr); }
+  .pf-home-hero { grid-template-columns: minmax(0, 1fr); padding: 36px 0; }
+  .pf-home-hero h1 { font-size: 42px; }
+  .pf-home-diagram { max-width: 540px; width: 100%; }
+  .pf-list-toolbar { align-items: stretch; flex-direction: column; }
+  .pf-search { width: 100%; }
+  .pf-conference-row { flex-wrap: wrap; }
+  .pf-row-actions { width: 100%; justify-content: flex-end; }
+  .pf-form-help { padding: 4px 4px 16px; }
+}
+@media (max-width: 540px) {
+  .pf-management-header { align-items: flex-start; flex-direction: column; gap: 16px; margin-bottom: 24px; }
+  .pf-management h1 { font-size: 25px; }
+  .pf-stat-grid, .pf-quick-links, .pf-home-features { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .pf-stat-card { padding: 18px; }
+  .pf-stat-card strong { margin: 8px 0 4px; font-size: 30px; }
+  .pf-card-heading, .pf-card-body, .pf-list-toolbar, .pf-conference-row, .pf-form-card .pf-card-body { padding: 18px; }
+  .pf-form-footer { padding: 16px; }
+  .pf-form-grid { grid-template-columns: minmax(0, 1fr); }
+  .pf-empty { padding: 36px 18px; }
+  .pf-conference-description h3 { overflow-wrap: anywhere; }
+  .pf-workspace-tabs { gap: 18px; margin-bottom: 20px; }
+  .pf-home-top { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .pf-home-hero { gap: 28px; }
+  .pf-home-hero h1 { font-size: 37px; letter-spacing: -1.4px; }
+  .pf-home-hero > div > p { font-size: 14px; }
+  .pf-home-features { gap: 24px; padding: 26px 0; }
+  .pf-home-features article { padding: 0 0 24px; border-right: 0; border-bottom: 1px solid var(--pf-border); }
+  .pf-home-bottom { align-items: flex-start; flex-direction: column; padding: 20px; }
+  .pf-diagram-step { margin: 22px 18px; gap: 12px; }
+  .pf-diagram-footer { flex-wrap: wrap; }
+  .pf-step-label { font-size: 9px; }
+  .pf-member-row { flex-wrap: wrap; }
+  .pf-created button { margin: 8px 0 0; }
+  .pf-management :is(.pf-button, .btn-primary, .btn-secondary) { min-height: 44px; }
+}

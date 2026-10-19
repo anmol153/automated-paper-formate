@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 
+from app.auth import get_current_user_id, get_optional_user_id
 import pytest
 from fastapi.testclient import TestClient
 
@@ -19,8 +20,14 @@ from app.storage.template_store import reset_store
 @pytest.fixture()
 def client(tmp_path):
     reset_store(tmp_path / "templates")
-    with TestClient(app) as test_client:
-        yield test_client
+    original = app.dependency_overrides.copy()
+    app.dependency_overrides[get_current_user_id] = lambda: "regression-user"
+    app.dependency_overrides[get_optional_user_id] = lambda: "regression-user"
+    try:
+        with TestClient(app) as test_client:
+            yield test_client
+    finally:
+        app.dependency_overrides = original
     reset_store()
 
 

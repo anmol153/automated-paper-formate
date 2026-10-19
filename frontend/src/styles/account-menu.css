@@ -1,0 +1,54 @@
+/* The account identity anchors the sidebar; its menu opens beside it. */
+.pf-sidebar { z-index: 50; }
+.pf-sidebar-account { margin-top: auto; padding: 12px 0; border-top: 1px solid var(--pf-border); }
+.pf-account-menu { position: relative; min-width: 0; }
+.pf-account-trigger { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 54px; padding: 8px; background: transparent; color: var(--pf-text); border-radius: 6px; text-align: left; cursor: pointer; }
+.pf-account-trigger:hover, .pf-account-trigger[aria-expanded="true"] { background: var(--pf-subtle); }
+.pf-account-avatar { display: grid; place-items: center; flex: 0 0 32px; width: 32px; height: 32px; border-radius: 50%; background: var(--pf-subtle); color: var(--pf-text); font-size: 11px; font-weight: 600; border: 1px solid var(--pf-border); }
+.pf-account-identity { display: flex; flex-direction: column; min-width: 0; flex: 1; gap: 3px; }
+.pf-account-identity strong { font-weight: 600; font-size: 12px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-account-identity small { color: var(--pf-muted); font-size: 11px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-account-trigger > svg { width: 16px; height: 18px; flex-shrink: 0; stroke-width: 2.8; }
+.pf-account-popup { position: absolute; left: calc(100% + 10px); bottom: 0; z-index: 80; width: 280px; max-width: calc(100vw - 24px); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 5px 0; background: var(--pf-surface); color: var(--pf-text); border: 1px solid var(--pf-border); border-radius: 8px; box-shadow: var(--pf-overlay-shadow); font-size: 13px; }
+.pf-account-popup-heading { display: flex; align-items: center; gap: 10px; padding: 10px 12px 14px; border-bottom: 1px solid var(--pf-border); }
+.pf-account-popup-heading > div { min-width: 0; }
+.pf-account-popup-heading strong, .pf-account-popup-heading small { display: block; overflow-wrap: anywhere; }
+.pf-account-popup-heading strong { font-size: 13px; font-weight: 600; }
+.pf-account-popup-heading small { margin-top: 3px; color: var(--pf-muted); font-size: 11px; }
+.pf-account-menu-links { padding: 5px; }
+.pf-account-popup [role="menuitem"] { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; min-height: 38px; border-radius: 4px; color: var(--pf-text); background: transparent; text-decoration: none; font: inherit; text-align: left; cursor: pointer; }
+.pf-account-popup [role="menuitem"]:hover, .pf-account-popup [role="menuitem"]:focus { outline: none; background: var(--pf-subtle); }
+.pf-account-popup [role="menuitem"]:focus-visible { outline: 2px solid var(--pf-accent); outline-offset: -2px; }
+.pf-account-popup [role="menuitem"]:disabled { opacity: .6; cursor: wait; }
+.pf-account-popup svg, .pf-account-sign-in svg { width: 17px; height: 17px; flex-shrink: 0; }
+.pf-account-sign-out { border-top: 1px solid var(--pf-border); padding: 5px 5px 0; }
+.pf-account-sign-out button:hover { color: var(--pf-danger); background: var(--pf-danger-bg); }
+.pf-account-error { padding: 10px 14px; margin: 0; color: var(--pf-danger); font-size: 12px; }
+.pf-account-sign-in { display: flex; align-items: center; gap: 10px; padding: 12px; color: var(--pf-muted); font-size: 13px; }
+.pf-shell.is-compact .pf-sidebar .pf-account-identity, .pf-shell.is-compact .pf-sidebar .pf-account-trigger > svg, .pf-shell.is-compact .pf-sidebar .pf-account-sign-in > span { display: none; }
+.pf-shell.is-compact .pf-sidebar .pf-account-trigger { padding: 8px; justify-content: center; }
+.pf-header-account { display: none; }
+.pf-account-menu--drawer .pf-account-popup { left: 0; right: 0; bottom: calc(100% + 8px); width: 100%; }
+.pf-schedule-row { display: flex; gap: 18px; padding: 24px; border-bottom: 1px solid var(--pf-border); }
+.pf-schedule-row:last-child { border: 0; }
+.pf-calendar-date { flex: 0 0 52px; height: 62px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid var(--pf-border); border-radius: 8px; background: var(--pf-canvas); }
+.pf-calendar-date span { color: var(--pf-muted); text-transform: uppercase; font-size: 10px; }
+.pf-calendar-date strong { font-size: 23px; line-height: 1.4; font-weight: 600; }
+.pf-schedule-row > div:last-child { min-width: 0; }
+.pf-schedule-row a, .pf-schedule-row time { display: block; }
+.pf-schedule-row a { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; margin: 6px 0; }
+.pf-schedule-row time { color: var(--pf-muted); font-size: 12px; margin-bottom: 10px; }
+.pf-guide-section { scroll-margin-top: 84px; }
+.pf-guide-section ol { list-style: decimal; padding-left: 22px; margin: 0; color: var(--pf-muted); }
+.pf-guide-section li + li { margin-top: 12px; }
+@media (max-width: 1023px) {
+  .pf-header-account { display: block; }
+  .pf-account-menu--header .pf-account-identity, .pf-account-menu--header .pf-account-trigger > svg { display: none; }
+  .pf-account-menu--header .pf-account-trigger { padding: 6px; width: 44px; height: 44px; min-height: 44px; }
+  .pf-account-menu--header .pf-account-popup { position: fixed; top: 64px; right: 12px; bottom: auto; left: auto; width: 280px; }
+  .pf-account-menu--drawer [role="menuitem"] { min-height: 44px; }
+}
+@media (max-height: 740px) and (min-width: 1024px) {
+  .pf-sidebar > .pf-navigation { overflow-y: auto; flex: 1; padding-bottom: 20px; min-height: 0; }
+  .pf-sidebar-account { flex-shrink: 0; }
+}

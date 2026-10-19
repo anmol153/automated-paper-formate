@@ -1,0 +1,38 @@
+{
+  "provider": "REA controlled browser scenario",
+  "scope": "Signed-out public local results page; no private data or backend writes",
+  "screenshots": [
+    {
+      "file": "screenshots/desktop.png",
+      "evidence_id": "ev_64bffb274906a1e2aeae187ad3c69efbc48304eecb9e42a5a989c11a77bfa4dc",
+      "sha256": "db5b0e08153b31d989f5fd9641282d5ec3341c265b30f323098454189495b516",
+      "bytes": 45625,
+      "width": 1440,
+      "height": 1000
+    },
+    {
+      "file": "screenshots/mobile.png",
+      "evidence_id": "ev_1a734366c42f6d69f51714493f06a9750f259c0870ab48266fa298db4002630e",
+      "sha256": "772d8210997636729ff5fc6df37f8a238513f9448976bd1e499eba48d7b54534",
+      "bytes": 19653,
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "screenshots/mobile-navigation.png",
+      "evidence_id": "ev_1a734366c42f6d69f51714493f06a9750f259c0870ab48266fa298db4002630e",
+      "sha256": "eb294be7189fab3fe1caabb55d5b9265224c04f8ccb613fe7520e18df890003f",
+      "bytes": 24493,
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "screenshots/tablet-dark.png",
+      "evidence_id": "ev_44e8bee04efd79afc63f31302e95e5528e32c9ef7d7ca7d0e92c888794d70f85",
+      "sha256": "0fa07684a8ce324dfdd2736556e41323603c1460e6b0d9cf1e1d2f5e6c1f0989",
+      "bytes": 24911,
+      "width": 1024,
+      "height": 768
+    }
+  ]
+}

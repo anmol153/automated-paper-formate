@@ -1,0 +1,75 @@
+/* Authentication gets a focused layout; the invitation form reuses the card. */
+.pf-auth-shell { display: flex; flex-direction: column; min-height: 100dvh; background: var(--pf-canvas); color: var(--pf-text); font-family: var(--pf-font); }
+.pf-auth-header { display: flex; align-items: center; justify-content: space-between; padding: 0 40px; min-height: 80px; border-bottom: 1px solid var(--pf-border); background: var(--pf-surface); gap: 20px; }
+.pf-auth-header > div { display: flex; align-items: center; gap: 24px; }
+.pf-auth-home-link { font-size: 13px; color: var(--pf-muted); }
+.pf-auth-header > div > button { width: 36px; height: 36px; border: 1px solid var(--pf-border); border-radius: 6px; background: var(--pf-surface); }
+.pf-auth-main { display: grid; align-items: center; flex: 1; width: 100%; padding: 48px 32px; }
+.pf-auth-layout { display: grid; grid-template-columns: minmax(0, 1fr) 420px; align-items: center; gap: 88px; width: 100%; max-width: 1040px; margin: 0 auto; }
+.pf-auth-introduction > .pf-eyebrow { color: var(--pf-accent); }
+.pf-auth-introduction > h2 { font-size: 40px; line-height: 1.16; letter-spacing: -1.5px; font-weight: 650; margin: 18px 0 22px; }
+.pf-auth-introduction > p { max-width: 400px; font-size: 15px; line-height: 1.8; }
+.pf-auth-benefits { display: flex; flex-direction: column; gap: 24px; margin-top: 36px; }
+.pf-auth-benefits > div { display: flex; align-items: flex-start; gap: 16px; }
+.pf-auth-benefits > div > span { display: grid; place-items: center; flex: 0 0 30px; width: 30px; height: 30px; background: var(--pf-surface); border: 1px solid var(--pf-border); border-radius: 7px; color: var(--pf-accent); font: 11px var(--pf-mono); }
+.pf-auth-benefits h3 { font-size: 13px; font-weight: 600; }
+.pf-auth-benefits p { font-size: 12px; margin-top: 5px; line-height: 1.6; }
+.pf-auth-introduction > .pf-auth-intro-footnote { font-size: 12px; padding-top: 26px; margin-top: 30px; border-top: 1px solid var(--pf-border); }
+.pf-auth-card { min-width: 0; padding: 32px; background: var(--pf-surface); color: var(--pf-text); border: 1px solid var(--pf-border); border-radius: 12px; box-shadow: 0 8px 24px #1f232807; }
+.pf-auth-card-heading { margin-bottom: 28px; }
+.pf-auth-card-heading > .pf-eyebrow { font-size: 10px; letter-spacing: 1.2px; }
+.pf-auth-card-heading h1 { font-size: 27px; line-height: 1.3; font-weight: 650; letter-spacing: -.7px; margin: 8px 0; }
+.pf-auth-card-heading > p { font-size: 13px; color: var(--pf-muted); }
+.pf-auth-form { display: flex; flex-direction: column; gap: 20px; }
+.pf-auth-form .pf-field { margin: 0; gap: 8px; }
+.pf-auth-form .pf-field > label { font-size: 13px; font-weight: 600; }
+.pf-auth-form .pf-input { min-height: 44px; border-radius: 6px; font-size: 14px; }
+.pf-auth-form > .pf-button { width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; }
+.pf-auth-password { position: relative; }
+.pf-auth-password input { padding-right: 60px; }
+.pf-password-toggle { position: absolute; right: 4px; top: 29px; min-width: 52px; min-height: 38px; color: var(--pf-muted); font-size: 12px; border-radius: 4px; cursor: pointer; }
+.pf-password-toggle:hover { color: var(--pf-accent); background: var(--pf-subtle); }
+.pf-auth-error { border: 1px solid var(--pf-danger); border-radius: 6px; background: var(--pf-danger-bg); color: var(--pf-danger); font-size: 13px; line-height: 1.6; padding: 12px 14px; margin-bottom: 22px; }
+.pf-auth-separator { display: flex; align-items: center; gap: 14px; margin: 24px 0; color: var(--pf-muted); font-size: 11px; }
+.pf-auth-separator::before, .pf-auth-separator::after { content: ""; height: 1px; flex: 1; background: var(--pf-border); }
+.pf-auth-google [aria-label="Google sign-in"] > h2 { display: none; }
+.pf-auth-google [aria-label="Google sign-in"] { display: flex; flex-direction: column; gap: 12px; }
+.pf-auth-google [aria-label="Google sign-in"] > * { margin: 0; }
+.pf-auth-google .btn-secondary { display: block; min-height: 44px; width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--pf-border); background: var(--pf-surface); color: var(--pf-text); box-shadow: none; font-size: 13px; }
+.pf-auth-google .btn-secondary:disabled { background: var(--pf-canvas); color: var(--pf-muted); opacity: .75; }
+.pf-auth-google p { font-size: 11px; line-height: 1.6; color: var(--pf-muted); }
+.pf-auth-google [role="alert"] { color: var(--pf-danger); }
+.pf-auth-google [aria-label="Google account chooser"] { align-self: center; max-width: 100%; }
+.pf-auth-switch { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 5px 8px; margin-top: 26px; font-size: 12px; }
+.pf-auth-switch > span { color: var(--pf-muted); }
+.pf-auth-switch > button { color: var(--pf-accent); font-size: inherit; font-weight: 600; cursor: pointer; padding: 4px 0; }
+.pf-auth-switch > button:hover { text-decoration: underline; }
+.pf-auth-card > .pf-auth-role-note { font-size: 10px; color: var(--pf-muted); line-height: 1.6; text-align: center; border-top: 1px solid var(--pf-border); padding-top: 18px; margin-top: 20px; }
+.pf-auth-footer { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 20px; padding: 22px 24px; color: var(--pf-muted); font-size: 11px; }
+.pf-auth-footer a { color: var(--pf-muted); }
+.pf-auth-footer a:hover, .pf-auth-home-link:hover { color: var(--pf-accent); text-decoration: underline; }
+.pf-auth-embedded .pf-auth-card { box-shadow: none; }
+.pf-auth-shell :is(a, button, input):focus-visible { outline: 2px solid var(--pf-accent); outline-offset: 3px; }
+.pf-auth-shell button:disabled, .pf-auth-switch > button:disabled { cursor: not-allowed; }
+@media (max-width: 960px) {
+  .pf-auth-layout { gap: 40px; grid-template-columns: minmax(0, 1fr) 390px; }
+  .pf-auth-introduction > h2 { font-size: 33px; }
+}
+@media (max-width: 760px) {
+  .pf-auth-header { min-height: 64px; padding: 0 16px; }
+  .pf-auth-header .pf-brand { font-size: 16px; padding: 0; }
+  .pf-auth-header > div { gap: 12px; }
+  .pf-auth-home-link { display: none; }
+  .pf-auth-main { display: block; padding: 32px 16px 20px; }
+  .pf-auth-layout { display: block; max-width: 440px; }
+  .pf-auth-introduction { display: none; }
+  .pf-auth-card { padding: 28px 24px; }
+  .pf-auth-card-heading { margin-bottom: 24px; }
+  .pf-auth-card-heading h1 { font-size: 26px; }
+  .pf-auth-switch > button { min-height: 44px; }
+  .pf-auth-footer { gap: 6px 16px; font-size: 10px; }
+}
+@media (max-width: 359px) {
+  .pf-auth-card { padding: 24px 18px; }
+  .pf-auth-embedded .pf-auth-card { padding: 24px 16px; }
+}

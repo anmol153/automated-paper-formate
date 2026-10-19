@@ -13,6 +13,7 @@ shared with it), with an API key as a fallback for public links.
 from __future__ import annotations
 
 import logging
+from io import BytesIO
 import re
 from functools import lru_cache
 from typing import Iterator, Optional
@@ -21,6 +22,7 @@ from google.auth.transport.requests import Request as GoogleAuthRequest
 from google.oauth2.service_account import Credentials as ServiceAccountCredentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from googleapiclient.http import MediaIoBaseDownload
 
 from app.config import get_settings
 from app.google.docs_client import DocumentFetchError, GoogleAuthError, _load_credentials, auth_mode
@@ -181,26 +183,29 @@ def list_folder(folder_id: str, recursive: bool = True, max_files: int = 200) ->
 
 
 def download(file: DriveFile, target_extension: str | None = None) -> tuple[str, bytes]:
-    """Fetch a file's bytes. Google Docs are exported to PDF unless asked otherwise."""
+    """Bounded streaming download using the existing server Google credentials."""
     service = _drive_service()
-
+    if file.is_folder or file.is_shortcut:
+        raise ValueError("The selected item is not a downloadable file")
     if file.is_google_doc or file.mime.startswith("application/vnd.google-apps."):
         extension = (target_extension or "pdf").casefold().lstrip(".")
         mime = EXPORT_TARGETS.get(extension, EXPORT_TARGETS["pdf"])
-        try:
-            data = service.files().export(fileId=file.id, mimeType=mime).execute()
-        except HttpError as exc:
-            raise _drive_error(exc, f"Google Doc '{file.name}'") from exc
-        return f"{file.name}.{extension}", data
-
-    if file.is_folder or file.is_shortcut:
-        raise ValueError(f"'{file.name}' is not a downloadable file.")
-
+        request = service.files().export_media(fileId=file.id, mimeType=mime)
+        name = f"{file.name}.{extension}"
+    else:
+        request = service.files().get_media(fileId=file.id)
+        name = file.name
+    output = BytesIO()
+    downloader = MediaIoBaseDownload(output, request, chunksize=65536)
     try:
-        data = service.files().get_media(fileId=file.id).execute()
+        done = False
+        while not done:
+            _, done = downloader.next_chunk(num_retries=1)
+            if output.tell() > get_settings().max_upload_bytes:
+                raise ValueError("Drive file exceeds the configured byte limit")
     except HttpError as exc:
-        raise _drive_error(exc, f"'{file.name}'") from exc
-    return file.name, data
+        raise _drive_error(exc, "selected document") from exc
+    return name, output.getvalue()
 
 
 def select_papers(files: list[DriveFile], accepted: tuple[str, ...] = DOWNLOADABLE_EXTENSIONS) -> list[DriveFile]:

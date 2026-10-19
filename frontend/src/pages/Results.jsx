@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { CATEGORY_LABELS, CATEGORY_ORDER, CHECK_STATUS_META, VERDICT_META } from "../lib/ruleOptions.js";
 import FileIcon from "../components/FileIcon.jsx";
+import FormattingWorkspace, { formattingVerdictLabel } from "../components/layout/FormattingWorkspace.jsx";
+import { ButtonLink } from "../components/ui/Button.jsx";
 
 export default function Results() {
   const location = useLocation();
@@ -32,8 +34,7 @@ export default function Results() {
 
   if (!report) {
     return (
-      <div className="animate-fade-in max-w-md mx-auto text-center">
-        <div className="panel p-8">
+      <FormattingWorkspace title="Formatting results" description="Review document compliance, findings and suggested corrections."><div className="pf-card pf-empty">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-16 w-16 mx-auto text-surface-300 dark:text-surface-600 mb-4" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
@@ -45,16 +46,15 @@ export default function Results() {
             </svg>
             Submit a paper
           </Link>
-        </div>
-      </div>
+        </div></FormattingWorkspace>
     );
   }
 
   return (
-    <div className="animate-fade-in">
+    <FormattingWorkspace title="Formatting results" description="Inspect the supported automated checks and the findings for each document." actions={<ButtonLink to="/reports">Saved reports →</ButtonLink>} className="pf-format-results">
       {isBatch ? <BatchHeader report={report} /> : <SingleHeader report={report} demo={isDemo} />}
 
-      <div className="mt-8 space-y-4">
+      <p className="pf-format-results-note">Formatting compliance is separate from a conference's peer-review decision.</p><div className="mt-8 space-y-4">
         {papers.map((paper, index) => (
           <PaperCard key={`${paper.filename}-${index}`} paper={paper} defaultOpen={index === 0} />
         ))}
@@ -68,7 +68,7 @@ export default function Results() {
           Check more papers
         </Link>
       </div>
-    </div>
+    </FormattingWorkspace>
   );
 }
 
@@ -82,9 +82,9 @@ function BatchHeader({ report }) {
     <section className="panel animate-slide-up" aria-labelledby="batch-heading">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 id="batch-heading" className="text-xl font-bold tracking-tight text-surface-900 dark:text-surface-50">
+          <h2 id="batch-heading" className="text-xl font-bold tracking-tight text-surface-900 dark:text-surface-50">
             {report.template_name || "Submission"} checked
-          </h1>
+          </h2>
           <p className="mt-1 text-sm text-surface-600 dark:text-surface-400">
             {total} paper{total === 1 ? "" : "s"}
             {report.source === "drive" ? " from a Google Drive folder" : ""}
@@ -125,7 +125,7 @@ function VerdictChip({ verdict, count }) {
     <span className={`badge ${meta.chip} gap-1.5`}>
       <span className={`h-1.5 w-1.5 rounded-full ${meta.dot}`} aria-hidden="true" />
       <span className="font-semibold">{count}</span>
-      <span className="font-medium capitalize">{meta.label.toLowerCase()}</span>
+      <span className="font-medium">{formattingVerdictLabel(verdict)}</span>
     </span>
   );
 }
@@ -140,7 +140,7 @@ function SingleHeader({ report, demo }) {
   return (
     <section className="panel animate-slide-up" aria-labelledby="single-heading">
       <div className="flex flex-row items-center gap-6">
-        <div className="rotate-90"><ScoreRing score={report.score ?? 0} /></div>
+        <div className="pf-format-score"><ScoreRing score={report.score ?? 0} /></div>
         <div className="flex-1 min-w-0 text-left">
           {metadata.title && (
             <div className="mb-2">
@@ -150,16 +150,16 @@ function SingleHeader({ report, demo }) {
               </span>
             </div>
           )}
-          {metadata.authors?.length && (
+          {metadata.authors?.length > 0 && (
             <p className="mb-2 text-sm text-primary-600 dark:text-primary-400">
               {metadata.authors.join(", ")}
             </p>
           )}
-          <h1 id="single-heading" className="text-xl font-bold tracking-tight text-surface-900 dark:text-surface-50">
+          <h2 id="single-heading" className="text-xl font-bold tracking-tight text-surface-900 dark:text-surface-50">
             Overall compliance: <span className="text-primary-600 dark:text-primary-400">{report.score}%</span>
-          </h1>
+          </h2>
           <p className="mt-1 text-sm text-surface-600 dark:text-surface-400">
-            {total} requirements evaluated{demo && " &middot; demo data"}
+            {total} requirements evaluated{demo && " · demo data"}
           </p>
           <div className="mt-4 flex gap-2">
             <StatChip label="Passed" value={passed} color="success" />
@@ -224,7 +224,7 @@ function ScoreRing({ score }) {
   );
 }
 
-function PaperCard({ paper, defaultOpen }) {
+export function PaperCard({ paper, defaultOpen, validationLabel }) {
   const [open, setOpen] = useState(defaultOpen);
   const meta = VERDICT_META[paper.verdict] ?? VERDICT_META.needs_review;
   const issues = (paper.results ?? []).filter((r) => r.status === "failed" || r.status === "missing");
@@ -232,7 +232,7 @@ function PaperCard({ paper, defaultOpen }) {
   const metadata = paper.metadata ?? {};
 
   return (
-    <section className="panel animate-slide-up" aria-labelledby={`paper-${paper.filename}`}>
+    <section className="panel animate-slide-up pf-formatting-paper" data-verdict={paper.verdict} aria-labelledby={`paper-${paper.filename}`}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -254,7 +254,7 @@ function PaperCard({ paper, defaultOpen }) {
               {metadata.title}
             </p>
           )}
-          {metadata.authors?.length && (
+          {metadata.authors?.length > 0 && (
             <p className="mt-0.5 text-xs text-primary-600 dark:text-primary-400 truncate">
               {metadata.authors.join(", ")}
             </p>
@@ -262,12 +262,12 @@ function PaperCard({ paper, defaultOpen }) {
           <p className="mt-0.5 text-xs text-surface-500 dark:text-surface-400">
             {[
               paper.format ? paper.format.toUpperCase() : null,
-              meta.label,
+              validationLabel || formattingVerdictLabel(paper.verdict),
               issues.length ? `${issues.length} issue${issues.length === 1 ? "" : "s"}` : "no issues",
               paper.score !== undefined ? `${paper.score}%` : null,
             ]
               .filter(Boolean)
-              .join(" &middot; ")}
+              .join(" · ")}
           </p>
         </div>
         <span className={`shrink-0 text-surface-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`} aria-hidden="true">
@@ -402,7 +402,7 @@ function CheckRow({ item }) {
           <p className="mt-1 text-[11px] text-surface-400">
             Confidence: {item.confidence}
             {item.confidence === "low"
-              ? " &mdash; this could not be measured reliably for this file type."
+              ? " — this could not be measured reliably for this file type."
               : ""}
           </p>
         )}

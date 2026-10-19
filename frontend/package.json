@@ -7,7 +7,14 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test:components": "node component-test.mjs"
+    "test:components": "node component-test.mjs",
+    "test:onboarding": "node onboarding-test.mjs",
+    "test:document": "node document-test.mjs",
+    "test:paper": "node paper-workspace-test.mjs",
+    "test:invitations": "node invitation-test.mjs",
+    "test:notifications": "node notification-test.mjs",
+    "test:shell": "node ui-shell-test.mjs",
+    "test:management": "node management-test.mjs"
   },
   "dependencies": {
     "axios": "^1.11.0",

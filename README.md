@@ -131,11 +131,28 @@ npm run dev        # http://localhost:5173 (proxies /api to :8000)
 ```
 
 - `/setup` — import a template, edit the inferred rules, save.
+- `/conferences` — create a conference, manage participants, open Papers or Templates.
+- `/conferences/:id/latest` — chairs import, edit and publish immutable conference templates;
+  members browse published rules and version history.
+- `/account` — copy your account ID for conference membership and connect Google sign-in.
+- `/invitations#token=…` — sign in with the invited address, inspect the conference and
+  explicitly accept. Chairs create/revoke private links under Conferences → Members.
+  Invitations require the schema-8 activation described in [PHASE9.md](PHASE9.md).
+- `/notifications` — paginated, permission-filtered update history with unread filtering
+  and read controls. The header bell shows recent unread updates and refreshes periodically.
+- `/submissions/:id?tab=document` — protected PDF preview with comments tied to a selected
+  revision and page. DOCX/LaTeX files offer download and page discussions without conversion.
 - `/submit` — pick the venue template, then add papers by drop, browse or paste, or paste a
-  Drive folder link. Multi-file submission is one request, not one per paper.
+  Drive folder link. Multi-file submission is one request, not one per paper. The conference
+  chooser above the standalone form opens conference submissions with peer review.
 - `/compare` — the original two-document template-vs-paper comparison.
 - `/results` — one card per paper: verdict, blocking reasons with remediation advice, and the
   full check list including checks that did not apply.
+
+See [PHASE7.md](PHASE7.md) for the conference onboarding walkthrough and verification commands.
+See [PHASE8.md](PHASE8.md) for document review, preview limits and page-comment verification.
+See [PHASE9.md](PHASE9.md) for expiring participant invitations and activation.
+See [PHASE10.md](PHASE10.md) for the notification center and verification walkthrough.
 
 ## Google Drive
 
@@ -213,21 +230,25 @@ Notes:
 ## Tests
 
 ```bash
-.venv/bin/pytest backend/tests -q
+.venv/bin/python backend/run_isolated_tests.py
 ```
 
 Includes the evaluation corpus invariants (`test_evaluation_corpus.py`), which assert that the
 compliant baseline stays clean, that every planted flaw is detected, and that over-reporting does
 not grow beyond the two documented metadata fields.
 
+The runner copies source/tests/samples to a temporary checkout, excluding your local
+`.env` and application data. This also isolates legacy tests that use default stores.
+Pass pytest arguments after the script name to select individual tests.
+
 ### Frontend
 
 ```bash
-# start the backend first: it is what the component test asserts against
-cd backend && ../.venv/bin/python -m uvicorn app.main:app --port 8000 --app-dir backend &
-
+# From the repository root; starts/stops a disposable backend automatically:
+.venv/bin/python backend/run_ui_checks.py
 cd frontend
-npm run test:components   # mounts every page in a DOM against real API responses
+npm run test:invitations  # invitation screen interactions with an isolated adapter
+npm run test:notifications # notification history, polling and account isolation
 npm run build             # production bundle
 ```
 

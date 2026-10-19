@@ -53,10 +53,8 @@ def _now() -> str:
 
 
 def default_db_path() -> Path:
-    override = os.environ.get(DB_PATH_ENV, "").strip()
-    if override:
-        return Path(override).expanduser()
-    return DEFAULT_STORE_DIR / DB_FILENAME
+    from .database import configured_path
+    return configured_path(DEFAULT_STORE_DIR / DB_FILENAME, DB_PATH_ENV)
 
 
 class ReportStore:
@@ -76,6 +74,8 @@ class ReportStore:
             else:
                 self.db_path = path / DB_FILENAME
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        from .database import initialize_if_empty
+        initialize_if_empty(self.db_path)
         self.directory = self.db_path.parent
         self._local = threading.local()
         with self._connect() as conn:
@@ -245,6 +245,36 @@ class ReportStore:
                     now,
                 ),
             )
+
+    def save_for_user(self, filename, report, kind, user_id):
+        from uuid import uuid4
+        from .database import transaction
+        with transaction(self):
+            row = self._connect().execute(
+                "SELECT filename FROM report_owners WHERE user_id=? AND display_filename=?", (user_id, filename)
+            ).fetchone()
+            key = row[0] if row else "report-" + uuid4().hex
+            self.save(key, report, kind)
+            if not row:
+                self._connect().execute("INSERT INTO report_owners VALUES (?,?,?)", (key, user_id, filename))
+
+    def list_for_user(self, user_id):
+        from .database import require_security_schema
+        require_security_schema(self._connect())
+        owners = dict(self._connect().execute(
+            "SELECT filename, display_filename FROM report_owners WHERE user_id=?", (user_id,)
+        ).fetchall())
+        return [{**item, "filename": owners[item["filename"]]} for item in self.list() if item["filename"] in owners]
+
+    def private_key(self, filename, user_id):
+        from .database import require_security_schema
+        require_security_schema(self._connect())
+        row = self._connect().execute(
+            "SELECT filename FROM report_owners WHERE user_id=? AND display_filename=?", (user_id, filename)
+        ).fetchone()
+        if not row:
+            raise ReportNotFound(filename)
+        return row[0]
 
     def delete(self, filename: str) -> None:
         cursor = self._connect().execute(

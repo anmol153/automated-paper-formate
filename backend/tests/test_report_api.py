@@ -6,6 +6,7 @@ import json
 import tempfile
 from pathlib import Path
 
+from app.auth import get_current_user_id, get_optional_user_id
 import pytest
 from fastapi.testclient import TestClient
 
@@ -20,7 +21,13 @@ SAMPLES_DIR = Path(__file__).resolve().parents[2] / "samples"
 def temp_report_store():
     with tempfile.TemporaryDirectory() as tmpdir:
         reset_report_store(tmpdir)
-        yield
+        original = app.dependency_overrides.copy()
+        app.dependency_overrides[get_current_user_id] = lambda: "regression-user"
+        app.dependency_overrides[get_optional_user_id] = lambda: "regression-user"
+        try:
+            yield
+        finally:
+            app.dependency_overrides = original
 
 
 def test_list_reports_empty():

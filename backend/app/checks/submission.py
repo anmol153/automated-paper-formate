@@ -12,13 +12,11 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Optional, Sequence
 
-from app.checks.engine import assess
-from app.models.facts import PaperFacts
 from app.models.report import CheckResult, PaperAssessment, SubmissionReport
 from app.models.rules import RuleSet, Severity
 from app.parsing.errors import ParseError
-from app.parsing.fact_extractor import build_facts
-from app.parsing.pipeline import SUPPORTED_FORMATS, normalize_document, sniff_format
+from app.parsing.pipeline import SUPPORTED_FORMATS, sniff_format
+from app.services.formatting import evaluate_document
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +72,7 @@ def assess_paper(
         )
 
     try:
-        doc = normalize_document(data, filename)
+        return evaluate_document(rules, data, filename, author_supplied=author_supplied)
     except ParseError as exc:
         return _rejected_file_assessment(filename, str(exc))
     except Exception as exc:  # pragma: no cover - defensive
@@ -82,10 +80,6 @@ def assess_paper(
         return _rejected_file_assessment(
             filename, f"The file could not be parsed ({type(exc).__name__})."
         )
-
-    facts = build_facts(data, filename, doc, fmt, author_supplied=author_supplied)
-    return assess(rules, facts)
-
 
 def assess_batch(
     rules: RuleSet,
