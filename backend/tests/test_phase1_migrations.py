@@ -5,7 +5,7 @@ import sqlite3
 import pytest
 from app.storage import conference_store, report_store, submission_store, user_store
 from app.storage.database import MigrationRequired
-from app.storage.migrate import create_target, main
+from app.storage.migrate import MIGRATIONS, create_target, main
 from app.storage.submission_store import SubmissionStore
 
 
@@ -40,6 +40,20 @@ def test_dry_run_does_not_create_target_or_change_sources(legacy, tmp_path, monk
     assert "dry-run" in capsys.readouterr().out
     assert not target.exists()
     assert fingerprints(legacy) == before
+
+
+def test_initialize_empty_cli_is_safe_to_run_repeatedly(tmp_path, monkeypatch, capsys):
+    target = tmp_path / "platform.db"
+    monkeypatch.setattr("sys.argv", ["migrate", "--target", str(target), "--initialize-empty"])
+    main()
+    assert '"mode": "initialize-if-empty"' in capsys.readouterr().out
+    with sqlite3.connect(target) as conn:
+        assert conn.execute("SELECT MAX(version) FROM schema_migrations").fetchone()[0] == MIGRATIONS[-1][0]
+
+    main()
+    assert '"mode": "initialize-if-empty"' in capsys.readouterr().out
+    with sqlite3.connect(target) as conn:
+        assert conn.execute("SELECT MAX(version) FROM schema_migrations").fetchone()[0] == MIGRATIONS[-1][0]
 
 
 def test_copy_preserves_records_and_quarantines_unknown_ownership(legacy, tmp_path):

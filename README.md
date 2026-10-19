@@ -168,37 +168,41 @@ formats are skipped and listed by `/drive/preview`.
 
 ## Deploy to Vercel (Docker)
 
-A single `Dockerfile.vercel` at the repo root packages both backend and frontend into one
-container: the frontend is built with Node, the backend deps are installed into a Python venv,
-and the FastAPI server serves `/api/*` plus the built SPA (static assets + `index.html` fallback).
+The root `Dockerfile.vercel` builds the frontend and serves it with the FastAPI backend from one
+HTTP container. Vercel detects this file, builds the image, and runs it as a container-backed
+Function; the server listens on Vercel's `$PORT` (default 80).
 
-Vercel auto-detects `Dockerfile.vercel`, builds the image, stores it in Vercel Container
-Registry, and routes all traffic to it as a Vercel Function. The server listens on `$PORT`
-(defaults to 80).
+Before deploying, add these variables in **Vercel → Project → Settings → Environment Variables**
+for each environment you use (Production, Preview, and Development), then redeploy:
 
-Deploy by pushing to a Vercel-connected Git repository, or from the CLI:
+| Variable | Value |
+| --- | --- |
+| `SECRET_KEY` | A stable, random secret of at least 32 characters. Generate one locally; do not commit or share it. |
+| `WORKFLOW_DB_PATH` | A writable SQLite path, for example `/tmp/paper-format/platform.db` for a temporary demo. Startup initializes a missing or empty database. |
+| `SUBMISSION_FILE_DIR` | A writable path for uploaded paper revisions, for example `/tmp/paper-format/submissions` for a temporary demo. |
+| `COOKIE_SECURE` | `true` for Vercel HTTPS. |
+| `GOOGLE_OAUTH_CLIENT_ID` | The Google **Web application** OAuth client ID ending in `.apps.googleusercontent.com`. |
 
-```bash
-vercel deploy        # uses ./Dockerfile.vercel automatically
-```
+Vercel does not deploy `docker-compose.yml`; it runs the single image described by
+`Dockerfile.vercel`. `PORT` is supplied by Vercel and should not be set manually. The SPA and API
+share one origin, so the default CORS list is sufficient. Add `CORS_ORIGINS` only if the browser
+frontend is hosted on a separate origin; its value must be a JSON array of origins.
 
-Run the same image locally:
+For Google sign-in, also register the deployed site origin (for example,
+`https://your-project.vercel.app`) under **Authorized JavaScript origins** in the Google OAuth
+client. Vercel applies environment-variable changes only to new deployments, so redeploy after
+saving them.
 
-```bash
-docker build -f Dockerfile.vercel -t paper-format .
-docker run --rm -p 8000:80 paper-format
-# → http://localhost:8000  (full app + API on one port)
-```
+Optional integrations can use `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, and
+`SMTP_FROM` for outbound email, or `GOOGLE_API_KEY` for public Google Drive imports. The private
+service-account JSON file is excluded from the image; do not put it into the repository or bake it
+into the Docker image.
 
-Notes:
-- Documents are uploaded per-request and processed in memory, so no document storage is needed.
-  **Publisher templates are the exception**: they are persisted to a SQLite file, which the
-  container's ephemeral filesystem will not keep between invocations. Set `TEMPLATE_DB_PATH` to a
-  mounted volume (or point it at a networked database via a driver change) before running this on
-  Vercel, or every redeploy and every scale-from-zero loses the configured venues.
-- Vercel scales container functions to zero after ~5 min idle (30 s in preview), so the first
-  request after idle pays a cold-start cost.
-- No `vercel.json` or framework detection is required; the container serves everything.
+**Vercel is suitable for a temporary/demo deployment with the current persistence layer.** The
+conference workflow database and uploaded revisions use SQLite and local files. Vercel containers
+are stateless, so `/tmp` data can disappear when an instance is replaced and separate instances
+cannot share it. Do not use this configuration for real conference submissions. Durable use needs
+a shared database and private object storage, with corresponding storage adapters in the app.
 
 ## Notes & limitations
 

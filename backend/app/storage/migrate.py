@@ -229,8 +229,26 @@ def main():
     inputs.add_argument("--upgrade-from", type=Path)
     parser.add_argument("--target", type=Path, required=True)
     parser.add_argument("--apply", action="store_true")
+    parser.add_argument(
+        "--initialize-empty", action="store_true",
+        help="Initialize a missing or empty target, or validate an existing workflow database",
+    )
     parser.add_argument("--offline", action="store_true")
     args = parser.parse_args()
+    if args.initialize_empty:
+        if args.source_dir or args.upgrade_from or args.apply or args.offline:
+            parser.error("--initialize-empty cannot be combined with source migration options")
+        from .database import initialize_if_empty
+        initialize_if_empty(args.target)
+        with sqlite3.connect(args.target.resolve().as_uri() + "?mode=ro", uri=True) as conn:
+            schema_version = conn.execute("SELECT MAX(version) FROM schema_migrations").fetchone()[0]
+        print(json.dumps({
+            "target": str(args.target),
+            "mode": "initialize-if-empty",
+            "schema_version": schema_version,
+        }, indent=2))
+        return
+
     report = {"target": str(args.target), "mode": "apply" if args.apply else "dry-run",
               "sources": inspect_sources(args.source_dir) if args.source_dir else [],
               "legacy_submission_ownership": "unclaimed; chair-only",
