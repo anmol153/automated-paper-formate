@@ -80,10 +80,10 @@ def limit_requests(request: Request, category: str, limit: int, seconds: int, *,
     address = request.client.host if request.client else "unknown"
     bucket = digest(f"{category}:{user_id or address}")
     row = conn.execute(
-        "INSERT INTO request_limits(bucket, attempts, resets_at) VALUES (?,1,?) "
+        "INSERT INTO request_limits AS current_limit(bucket, attempts, resets_at) VALUES (?,1,?) "
         "ON CONFLICT(bucket) DO UPDATE SET "
-        "attempts=CASE WHEN resets_at<=? THEN 1 ELSE attempts+1 END, "
-        "resets_at=CASE WHEN resets_at<=? THEN excluded.resets_at ELSE resets_at END "
+        "attempts=CASE WHEN current_limit.resets_at<=? THEN 1 ELSE current_limit.attempts+1 END, "
+        "resets_at=CASE WHEN current_limit.resets_at<=? THEN excluded.resets_at ELSE current_limit.resets_at END "
         "RETURNING attempts, resets_at", (bucket, now + seconds, now, now),
     ).fetchone()
     if row[0] > limit:

@@ -39,6 +39,26 @@ def test_storage_listing_queries_use_postgres_compatible_tie_breakers(tmp_path):
     assert "rowid" not in connection.queries[0].lower()
 
 
+def test_authentication_rate_limit_upsert_works_with_sqlite(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+
+    from app import auth
+    from app.storage.user_store import UserStore
+
+    store = UserStore(tmp_path / "users")
+    monkeypatch.setattr(auth, "get_user_store", lambda: store)
+    request = SimpleNamespace(client=SimpleNamespace(host="rate-limit-test"))
+
+    auth.limit_requests(request, "login", 10, 900)
+    auth.limit_requests(request, "login", 10, 900)
+
+    bucket = auth.digest("login:rate-limit-test")
+    attempts = store._connect().execute(
+        "SELECT attempts FROM request_limits WHERE bucket=?", (bucket,)
+    ).fetchone()[0]
+    assert attempts == 2
+
+
 def test_qmark_translation_preserves_question_marks_inside_literals():
     sql, run = translate_sql("SELECT '?' AS literal, value FROM example WHERE id=?")
     assert run
