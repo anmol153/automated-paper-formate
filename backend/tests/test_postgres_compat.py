@@ -51,3 +51,8 @@ def test_all_sqlite_migration_triggers_have_postgres_equivalents():
 def test_autoincrement_migration_is_converted():
     translated = _postgres_statement("CREATE TABLE events (event_id INTEGER PRIMARY KEY AUTOINCREMENT, action TEXT)")
     assert translated == ["CREATE TABLE events (event_id BIGSERIAL PRIMARY KEY, action TEXT)"]
+
+
+def test_postgres_migration_renames_reserved_session_user_index():
+    translated = _postgres_statement("CREATE INDEX session_user ON auth_sessions(user_id)")
+    assert translated == ["CREATE INDEX idx_session_user ON auth_sessions(user_id)"]

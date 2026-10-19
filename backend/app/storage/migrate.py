@@ -93,6 +93,10 @@ def _postgres_statement(statement):
             f"CREATE TRIGGER {name} BEFORE {event} ON {table} FOR EACH ROW{when} EXECUTE FUNCTION {function}()",
         ]
     sql = re.sub(r"\bINTEGER\s+PRIMARY\s+KEY\s+AUTOINCREMENT\b", "BIGSERIAL PRIMARY KEY", sql, flags=re.I)
+    # SESSION_USER is a PostgreSQL special register and cannot be used as an
+    # unquoted index name. Preserve the SQLite migration/checksum unchanged.
+    sql = re.sub(r"^(CREATE\s+(?:UNIQUE\s+)?INDEX\s+)session_user\b",
+                 r"\1idx_session_user", sql, flags=re.I)
     if re.search(r"\bAUTOINCREMENT\b", sql, flags=re.I):
         raise ValueError("Unsupported AUTOINCREMENT declaration in PostgreSQL migration")
     return [sql]
