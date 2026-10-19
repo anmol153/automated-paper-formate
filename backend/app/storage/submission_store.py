@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 import sqlite3
+from .postgres_compat import connect as connect_database
 import threading
 import uuid
 from datetime import datetime, timezone
@@ -119,7 +120,7 @@ class SubmissionStore:
     def _connect(self) -> sqlite3.Connection:
         conn = getattr(self._local, "conn", None)
         if conn is None:
-            conn = sqlite3.connect(self.db_path, isolation_level=None)
+            conn = connect_database(self.db_path, isolation_level=None)
             conn.row_factory = sqlite3.Row
             conn.execute("PRAGMA journal_mode=WAL")
             conn.execute("PRAGMA synchronous=NORMAL")

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import os
 import sqlite3
+from .postgres_compat import connect as connect_database
 import threading
 import uuid
 from datetime import datetime, timezone
@@ -102,7 +103,7 @@ class TemplateVersionStore:
         if conn is None:
             resolved = self._resolved_db_path
             resolved.parent.mkdir(parents=True, exist_ok=True)
-            conn = sqlite3.connect(
+            conn = connect_database(
                 resolved,
                 isolation_level=None,
             )

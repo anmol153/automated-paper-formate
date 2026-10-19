@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import os
 import sqlite3
+from .postgres_compat import connect as connect_database
 import threading
 import uuid
 from datetime import datetime, timezone
@@ -116,7 +117,7 @@ class TemplateStore:
         """Return this thread's connection, opening it on first use."""
         conn = getattr(self._local, "conn", None)
         if conn is None:
-            conn = sqlite3.connect(
+            conn = connect_database(
                 self.db_path,
                 # Autocommit: each statement is its own atomic transaction, so
                 # a failed write cannot leave a half-updated rule set.

@@ -69,6 +69,79 @@ def initialize_connection(conn):
         raise
 
 
+def _postgres_statement(statement):
+    """Translate checked-in SQLite schema statements for PostgreSQL."""
+    import re
+    sql = statement.strip().rstrip(";").strip()
+    trigger = re.fullmatch(
+        r"CREATE\s+TRIGGER\s+(\w+)\s+BEFORE\s+(UPDATE(?:\s+OF\s+[\w, ]+)?|DELETE|INSERT)\s+ON\s+(\w+)"
+        r"(?:\s+WHEN\s+(.*?))?\s+BEGIN\s+SELECT\s+RAISE\(ABORT,\s*'([^']*)'\);\s+END",
+        sql, flags=re.I | re.S,
+    )
+    if trigger:
+        name, operation, table, condition, message = trigger.groups()
+        if operation.upper().startswith("UPDATE OF "):
+            columns = ",".join(part.strip() for part in operation[10:].split(","))
+            event = "UPDATE OF " + columns
+        else:
+            event = operation.upper()
+        when = f" WHEN ({condition.strip()})" if condition else ""
+        function = f"{name}_guard_fn"
+        escaped_message = message.replace("'", "''")
+        return [
+            f"CREATE OR REPLACE FUNCTION {function}() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION '{escaped_message}'; END; $$",
+            f"CREATE TRIGGER {name} BEFORE {event} ON {table} FOR EACH ROW{when} EXECUTE FUNCTION {function}()",
+        ]
+    sql = re.sub(r"\bINTEGER\s+PRIMARY\s+KEY\s+AUTOINCREMENT\b", "BIGSERIAL PRIMARY KEY", sql, flags=re.I)
+    if re.search(r"\bAUTOINCREMENT\b", sql, flags=re.I):
+        raise ValueError("Unsupported AUTOINCREMENT declaration in PostgreSQL migration")
+    return [sql]
+
+
+def initialize_shared_database():
+    """Apply checked-in migrations to DATABASE_URL, refusing unknown schemas."""
+    from .postgres_compat import connect, database_url, shared_path
+    if not database_url():
+        raise ValueError("Set DATABASE_URL to initialize shared PostgreSQL")
+    conn = connect(shared_path(), isolation_level=None)
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        # Multiple serverless instances may boot together. Keep schema creation
+        # and version checks single-writer even when the URL uses a pooler.
+        conn.execute("SELECT pg_advisory_xact_lock(607318602947)")
+        exists = conn.execute(
+            "SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='schema_migrations'"
+        ).fetchone()
+        if not exists:
+            unrelated = conn.execute(
+                "SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_type='BASE TABLE' LIMIT 1"
+            ).fetchone()
+            if unrelated:
+                raise ValueError("Database has tables but no Paper-Format migration history; use an empty database or reconcile it first")
+            conn.execute("CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL, checksum TEXT NOT NULL)")
+        recorded = {row[0]: row[1] for row in conn.execute("SELECT version,checksum FROM schema_migrations").fetchall()}
+        scripts = list(migration_scripts())
+        expected = {version: checksum for version, _, checksum in scripts}
+        if any(version not in expected or expected[version] != checksum for version, checksum in recorded.items()):
+            raise ValueError("Database migration history does not match this application version")
+        for version, script, checksum in scripts:
+            if version in recorded:
+                continue
+            for statement in statements(script):
+                for sql in _postgres_statement(statement):
+                    conn.execute(sql)
+            conn.execute("INSERT INTO schema_migrations VALUES (?,?,?)",
+                         (version, datetime.now(timezone.utc).isoformat(), checksum))
+        conn.execute("COMMIT")
+        conn.commit()
+        return max(expected)
+    except BaseException:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
 def inspect_sources(source_dir):
     """Read counts only, including WAL-visible records; no private record output."""
     inventory = []
@@ -227,14 +300,23 @@ def main():
     inputs = parser.add_mutually_exclusive_group()
     inputs.add_argument("--source-dir", type=Path)
     inputs.add_argument("--upgrade-from", type=Path)
-    parser.add_argument("--target", type=Path, required=True)
+    parser.add_argument("--target", type=Path)
     parser.add_argument("--apply", action="store_true")
     parser.add_argument(
         "--initialize-empty", action="store_true",
         help="Initialize a missing or empty target, or validate an existing workflow database",
     )
+    parser.add_argument("--initialize-shared", action="store_true",
+                        help="Initialize or migrate the PostgreSQL database from DATABASE_URL")
     parser.add_argument("--offline", action="store_true")
     args = parser.parse_args()
+    if args.initialize_shared:
+        if args.initialize_empty or args.source_dir or args.upgrade_from or args.apply or args.offline:
+            parser.error("--initialize-shared cannot be combined with SQLite migration options")
+        print(json.dumps({"mode": "initialize-shared", "schema_version": initialize_shared_database()}, indent=2))
+        return
+    if args.target is None:
+        parser.error("--target is required for SQLite migration modes")
     if args.initialize_empty:
         if args.source_dir or args.upgrade_from or args.apply or args.offline:
             parser.error("--initialize-empty cannot be combined with source migration options")

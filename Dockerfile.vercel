@@ -23,4 +23,4 @@ WORKDIR /app/backend
 COPY backend/app ./app
 COPY --from=frontend-build /build/dist ./static/frontend
 EXPOSE 80
-CMD ["sh", "-c", "set -e; export WORKFLOW_DB_PATH=\"${WORKFLOW_DB_PATH:-/tmp/paper-format/platform.db}\"; export SUBMISSION_FILE_DIR=\"${SUBMISSION_FILE_DIR:-/tmp/paper-format/submissions}\"; mkdir -p \"$(dirname \"$WORKFLOW_DB_PATH\")\" \"$SUBMISSION_FILE_DIR\"; python -m app.storage.migrate --target \"$WORKFLOW_DB_PATH\" --initialize-empty; exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-80}"]
+CMD ["sh", "-c", "set -e; export WORKFLOW_DB_PATH=\"${WORKFLOW_DB_PATH:-/tmp/paper-format/platform.db}\"; export SUBMISSION_FILE_DIR=\"${SUBMISSION_FILE_DIR:-/tmp/paper-format/submissions}\"; if [ -n \"${DATABASE_URL:-}${POSTGRES_URL:-}\" ]; then python -m app.storage.migrate --initialize-shared; else mkdir -p \"$(dirname \"$WORKFLOW_DB_PATH\")\"; python -m app.storage.migrate --target \"$WORKFLOW_DB_PATH\" --initialize-empty; fi; mkdir -p \"$SUBMISSION_FILE_DIR\"; exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-80}"]

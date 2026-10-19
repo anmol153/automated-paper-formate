@@ -178,8 +178,7 @@ for each environment you use (Production, Preview, and Development), then redepl
 | Variable | Value |
 | --- | --- |
 | `SECRET_KEY` | A stable, random secret of at least 32 characters. Generate one locally; do not commit or share it. |
-| `WORKFLOW_DB_PATH` | A writable SQLite path, for example `/tmp/paper-format/platform.db` for a temporary demo. Startup initializes a missing or empty database. |
-| `SUBMISSION_FILE_DIR` | A writable path for uploaded paper revisions, for example `/tmp/paper-format/submissions` for a temporary demo. |
+| `DATABASE_URL` | A PostgreSQL connection URL (for example, Neon’s pooled URL). Startup applies the versioned app migrations. |
 | `COOKIE_SECURE` | `true` for Vercel HTTPS. |
 | `GOOGLE_OAUTH_CLIENT_ID` | The Google **Web application** OAuth client ID ending in `.apps.googleusercontent.com`. |
 
@@ -193,16 +192,23 @@ For Google sign-in, also register the deployed site origin (for example,
 client. Vercel applies environment-variable changes only to new deployments, so redeploy after
 saving them.
 
+For durable paper uploads on Vercel, connect a **private** Blob store to the project. Vercel
+provides `BLOB_STORE_ID` and its rotating OIDC credential; the app's Blob SDK integration uses
+those automatically. The webhook key is not needed for this server-side upload flow. Alternatively,
+configure a private S3-compatible bucket with `S3_BUCKET`, `S3_ACCESS_KEY_ID`, and
+`S3_SECRET_ACCESS_KEY`; set `S3_ENDPOINT_URL` and `S3_REGION` for your provider. The app keeps files
+private and serves them only after its normal authorization and integrity checks. Local filesystem
+storage remains available for SQLite development. When shared PostgreSQL is enabled, paper-file
+operations fail clearly until Blob or S3 storage is configured rather than writing to ephemeral disk.
+
 Optional integrations can use `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, and
 `SMTP_FROM` for outbound email, or `GOOGLE_API_KEY` for public Google Drive imports. The private
 service-account JSON file is excluded from the image; do not put it into the repository or bake it
 into the Docker image.
 
-**Vercel is suitable for a temporary/demo deployment with the current persistence layer.** The
-conference workflow database and uploaded revisions use SQLite and local files. Vercel containers
-are stateless, so `/tmp` data can disappear when an instance is replaced and separate instances
-cannot share it. Do not use this configuration for real conference submissions. Durable use needs
-a shared database and private object storage, with corresponding storage adapters in the app.
+The Vercel image supports a shared PostgreSQL database and private Vercel Blob or S3-compatible paper storage.
+Without `DATABASE_URL`, it retains the temporary `/tmp` SQLite fallback for demos. Configure both
+shared services before using the deployment for real submissions.
 
 ## Notes & limitations
 

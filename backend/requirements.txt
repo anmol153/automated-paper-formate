@@ -12,3 +12,6 @@ python-jose[cryptography]>=3.3.0
 passlib[bcrypt]>=1.7.4
 # Passlib 1.7 requires the bcrypt 4.0 backend API.
 bcrypt>=4.0,<4.1
+psycopg[binary]>=3.2,<4
+boto3>=1.35,<2
+vercel-blob>=0.5,<1

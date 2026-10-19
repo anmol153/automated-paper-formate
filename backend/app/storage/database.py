@@ -11,6 +11,9 @@ class MigrationRequired(RuntimeError):
 
 def configured_path(fallback: Path, legacy_env: str) -> Path:
     from app.config import get_settings
+    from .postgres_compat import enabled, shared_path
+    if enabled():
+        return shared_path()
     unified = os.environ.get("WORKFLOW_DB_PATH", str(get_settings().workflow_db_path or "")).strip()
     legacy = os.environ.get(legacy_env, "").strip()
     if unified:
@@ -41,6 +44,11 @@ def require_security_schema(conn: sqlite3.Connection) -> None:
 
 def initialize_if_empty(path: Path) -> None:
     """Initialize only an empty database. Never upgrade an existing installation."""
+    from .postgres_compat import enabled
+    if enabled():
+        # Shared databases are initialized by the explicit deployment migration
+        # command, not implicitly by each web worker.
+        return
     from .migrate import initialize_connection
     try:
         descriptor = os.open(path, os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)

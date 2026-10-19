@@ -39,6 +39,11 @@ class Settings(BaseSettings):
 
     google_api_key: str | None = None
     google_service_account_file: Path = BACKEND_DIR / "credentials" / "service_account.json"
+    s3_bucket: str | None = None
+    s3_endpoint_url: str | None = None
+    s3_region: str = "auto"
+    s3_access_key_id: str | None = None
+    s3_secret_access_key: str | None = None
     google_scopes: tuple[str, ...] = (
         "https://www.googleapis.com/auth/documents.readonly",
         "https://www.googleapis.com/auth/drive.readonly",

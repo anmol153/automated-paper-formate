@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import os
 import sqlite3
+from .postgres_compat import connect as connect_database
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
@@ -92,7 +93,7 @@ class UserStore:
         """Return this thread's connection, opening it on first use."""
         conn = getattr(self._local, "conn", None)
         if conn is None:
-            conn = sqlite3.connect(
+            conn = connect_database(
                 self.db_path,
                 isolation_level=None,
             )
