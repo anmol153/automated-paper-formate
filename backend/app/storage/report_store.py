@@ -117,7 +117,7 @@ class ReportStore:
         """All reports, most recently updated first."""
         rows = self._connect().execute(
             "SELECT filename, kind, paper_title, authors_json, format, score, verdict, template_name, updated_at "
-            "FROM reports ORDER BY updated_at DESC, rowid DESC"
+            "FROM reports ORDER BY updated_at DESC, created_at DESC, filename DESC"
         ).fetchall()
         summaries: list[dict[str, Any]] = []
         for row in rows:

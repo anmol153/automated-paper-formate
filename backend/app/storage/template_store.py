@@ -146,11 +146,12 @@ class TemplateStore:
     def list(self) -> list[RuleSet]:
         """All templates, most recently updated first.
 
-        ``rowid`` is the creation order, used only to break exact timestamp
-        ties.
+        Creation time and the stable template identifier break update-time
+        ties, which works consistently across SQLite and PostgreSQL.
         """
         rows = self._connect().execute(
-            "SELECT rules_json FROM templates ORDER BY updated_at DESC, rowid DESC"
+            "SELECT rules_json FROM templates "
+            "ORDER BY updated_at DESC, created_at DESC, template_id DESC"
         ).fetchall()
         templates: list[RuleSet] = []
         for row in rows:

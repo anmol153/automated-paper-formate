@@ -141,14 +141,15 @@ class ConferenceStore:
                 SELECT conference_id, name, description, start_date, end_date,
                        created_at, updated_at FROM conferences
                 WHERE LOWER(name) LIKE LOWER(?) OR LOWER(description) LIKE LOWER(?)
-                ORDER BY updated_at DESC, rowid DESC
+                ORDER BY updated_at DESC, created_at DESC, conference_id DESC
                 """,
                 (like, like),
             ).fetchall()
         else:
             rows = self._connect().execute(
                 "SELECT conference_id, name, description, start_date, end_date, "
-                "created_at, updated_at FROM conferences ORDER BY updated_at DESC, rowid DESC"
+                "created_at, updated_at FROM conferences "
+                "ORDER BY updated_at DESC, created_at DESC, conference_id DESC"
             ).fetchall()
         conferences: list[Conference] = []
         for row in rows:

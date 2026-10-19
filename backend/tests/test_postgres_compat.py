@@ -2,6 +2,43 @@ from app.storage.migrate import MIGRATIONS, migration_scripts, statements, _post
 from app.storage.postgres_compat import Row, _row_factory, translate_sql
 
 
+def test_storage_listing_queries_use_postgres_compatible_tie_breakers(tmp_path):
+    from app.storage.conference_store import ConferenceStore
+    from app.storage.report_store import ReportStore
+    from app.storage.template_store import TemplateStore
+
+    class EmptyResult:
+        @staticmethod
+        def fetchall():
+            return []
+
+    class CapturingConnection:
+        def __init__(self):
+            self.queries = []
+
+        def execute(self, query, parameters=()):
+            self.queries.append(query)
+            return EmptyResult()
+
+    stores = [
+        (ConferenceStore(tmp_path / "conference"), ("list_conferences", (None,))),
+        (TemplateStore(tmp_path / "template"), ("list", ())),
+        (ReportStore(tmp_path / "report"), ("list", ())),
+    ]
+    for store, (method, args) in stores:
+        connection = CapturingConnection()
+        store._connect = lambda connection=connection: connection
+        getattr(store, method)(*args)
+        assert len(connection.queries) == 1
+        assert "rowid" not in connection.queries[0].lower()
+
+    conference_store, _ = stores[0]
+    connection = CapturingConnection()
+    conference_store._connect = lambda: connection
+    conference_store.list_conferences(query="paper")
+    assert "rowid" not in connection.queries[0].lower()
+
+
 def test_qmark_translation_preserves_question_marks_inside_literals():
     sql, run = translate_sql("SELECT '?' AS literal, value FROM example WHERE id=?")
     assert run
