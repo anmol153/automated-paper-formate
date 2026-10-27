@@ -51,6 +51,11 @@ class TypographyFacts(BaseModel):
     body_font_size_pt: Optional[float] = None
     title_font_size_pt: Optional[float] = None
     heading_font_size_pt: Optional[float] = None
+    subheading_font_size_pt: Optional[float] = None
+    title_alignment: Optional[str] = None
+    abstract_alignment: Optional[str] = None
+    heading_alignment: Optional[str] = None
+    subheading_alignment: Optional[str] = None
     heading_levels: dict[str, float] = Field(default_factory=dict)
     line_spacing: Optional[float] = None
     alignment_distribution: dict[str, int] = Field(default_factory=dict)

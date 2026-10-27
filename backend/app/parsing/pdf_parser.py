@@ -263,29 +263,63 @@ def _region_for_block(block: BlockInfo, layout: Layout) -> tuple[float, float]:
     return nearest
 
 
+def _visual_rows(lines: list[LineInfo]) -> list[tuple[float, float]]:
+    """Horizontal extent of each printed row.
+
+    PyMuPDF often emits a section number and its title ("1", "Introduction")
+    as separate lines on the same baseline; judged separately, neither touches
+    both edges the way the row does.
+    """
+    rows: list[list[float]] = []
+    for line in sorted(lines, key=lambda l: (l.baseline, l.x0)):
+        if rows and abs(rows[-1][2] - line.baseline) <= 1.0:
+            rows[-1][0] = min(rows[-1][0], line.x0)
+            rows[-1][1] = max(rows[-1][1], line.x1)
+        else:
+            rows.append([line.x0, line.x1, line.baseline])
+    return [(r[0], r[1]) for r in rows]
+
+
 def _infer_alignment(lines: list[LineInfo], region: tuple[float, float]) -> str | None:
     bx0, bx1 = region
     col_width = bx1 - bx0
     if col_width < 30:
         return None
 
+    rows = _visual_rows(lines)
+    lgaps = [x0 - bx0 for x0, _ in rows]
+    rgaps = [bx1 - x1 for _, x1 in rows]
+
+    # Full rows sharing both edges are justified even when the block is
+    # indented on both sides (an LNCS abstract). Checked before centring, which
+    # such a block would otherwise satisfy, and before right alignment, which
+    # it satisfies when the left edge of the region is misjudged.
+    if len(rows) >= 3:
+        full = rows[:-1]
+        rights = [x1 for _, x1 in full]
+        lefts = [x0 for x0, _ in full[1:]] or [full[0][0]]
+        fill = statistics.median([(x1 - x0) / col_width for x0, x1 in full])
+        if max(rights) - min(rights) <= 2.0 and max(lefts) - min(lefts) <= 2.0 and fill > 0.6:
+            return "justified"
+
     col_mid = (bx0 + bx1) / 2.0
-    centers = [(line.x0 + line.x1) / 2 for line in lines]
-    widths = [line.x1 - line.x0 for line in lines]
-    if all(abs(c - col_mid) <= 10.0 for c in centers) and max(widths) <= col_width * 0.92:
+    centers = [(x0 + x1) / 2 for x0, x1 in rows]
+    widths = [x1 - x0 for x0, x1 in rows]
+    if all(abs(c - col_mid) <= 10.0 for c in centers) and (
+        max(widths) <= col_width * 0.92 or min(lgaps) > 3.0
+    ):
         return "center"
 
-    lgaps = [line.x0 - bx0 for line in lines]
-    rgaps = [bx1 - line.x1 for line in lines]
     med_l = statistics.median(lgaps)
     med_r = statistics.median(rgaps)
 
-    fill = statistics.median([(line.x1 - line.x0) / col_width for line in lines])
-    if med_l <= 3.0 and med_r <= 3.0 and len(lines) >= 3 and fill > 0.85:
+    fill = statistics.median([w / col_width for w in widths])
+    if med_l <= 3.0 and med_r <= 3.0 and len(rows) >= 3 and fill > 0.85:
         return "justified"
     if med_l <= 3.0:
         return "left"
-    if med_r <= 3.0 and med_l > 10.0:
+    ragged_left = len(rows) == 1 or max(lgaps) - min(lgaps) > 3.0
+    if med_r <= 3.0 and med_l > 10.0 and ragged_left:
         return "right"
     return None
 

@@ -60,6 +60,43 @@ def _strip_numbering(text: str) -> str:
     return _NUMBERING_PREFIX_RE.sub("", text).strip()
 
 
+_SECTION_DEPTH_RE = re.compile(r"^(\d+(?:\.\d+)*)[.)]?\s")
+
+
+def _heading_depth_from_numbering(text: str) -> int | None:
+    match = _SECTION_DEPTH_RE.match(text.strip())
+    return match.group(1).count(".") + 1 if match else None
+
+
+def split_heading_levels(
+    blocks: list[SectionBlock],
+) -> tuple[list[SectionBlock], list[SectionBlock]]:
+    """Section (level 1) and subsection (level 2) headings.
+
+    Publishers set the two levels differently -- LNCS uses 12pt sections and
+    10pt subsections -- so one rule over both always fails one of them.
+    Numbering decides the level when present; otherwise the largest heading
+    size is level 1 and anything smaller is level 2. Run-in headings
+    ("Sample Heading. Text follows...") are deeper levels and belong to neither.
+    """
+    candidates = [b for b in blocks if not b.text.strip().endswith(".")]
+    sizes = [b.format.font_size_pt for b in candidates if b.format.font_size_pt]
+    top_size = max(sizes) if sizes else None
+
+    sections: list[SectionBlock] = []
+    subsections: list[SectionBlock] = []
+    for block in candidates:
+        depth = _heading_depth_from_numbering(block.text)
+        if depth is None:
+            size = block.format.font_size_pt
+            depth = 2 if top_size and size and size < top_size - 0.5 else 1
+        if depth == 1:
+            sections.append(block)
+        elif depth == 2:
+            subsections.append(block)
+    return sections, subsections
+
+
 def match_canonical_section(text: str) -> str | None:
     candidate = _strip_numbering(text)
     for canonical, pattern in _SECTION_PATTERNS.items():
@@ -73,6 +110,23 @@ def _is_caps_heading(text: str) -> bool:
         len(text) <= _MAX_CAPS_HEADING_CHARS
         and text.isupper()
         and any(ch.isalpha() for ch in text)
+    )
+
+
+_MAX_TITLE_CHARS = 300
+
+
+def _continues_title(first: RawBlock, block: RawBlock) -> bool:
+    size = first.format.font_size_pt
+    return (
+        size is not None
+        and first.format.bold is True
+        and block.format.font_size_pt is not None
+        and abs(block.format.font_size_pt - size) <= 0.25
+        and block.format.bold == first.format.bold
+        and len(first.text) + len(block.text) <= _MAX_TITLE_CHARS
+        and not match_canonical_section(block.text)
+        and not _KEYWORDS_PATTERN.match(_strip_numbering(block.text))
     )
 
 
@@ -118,8 +172,24 @@ def classify_blocks(blocks: list[RawBlock]) -> list[SectionBlock]:
     first = blocks[0]
     first_canonical = match_canonical_section(first.text)
     if first_canonical != "Abstract":
-        sections.append(SectionBlock(type="title", text=first.text, format=first.format))
+        # A title that wraps comes out of a PDF as one block per line. Without
+        # this, the second line is set like a heading and gets classified as one.
+        title_parts = [first]
         index = 1
+        while index < len(blocks) and _continues_title(first, blocks[index]):
+            title_parts.append(blocks[index])
+            index += 1
+        title_format = first.format
+        if title_format.alignment is None:
+            alignment = next((b.format.alignment for b in title_parts if b.format.alignment), None)
+            title_format = title_format.model_copy(update={"alignment": alignment})
+        sections.append(
+            SectionBlock(
+                type="title",
+                text=" ".join(b.text for b in title_parts),
+                format=title_format,
+            )
+        )
 
     author_chunks: list[RawBlock] = []
     while index < len(blocks):

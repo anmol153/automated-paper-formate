@@ -574,6 +574,9 @@ def _typography_element(
     elif rule_id_prefix.startswith("typography.heading"):
         actual_family = facts.typography.dominant_font
         actual_size = facts.typography.heading_font_size_pt
+    elif rule_id_prefix.startswith("typography.subheading"):
+        actual_family = facts.typography.dominant_font
+        actual_size = facts.typography.subheading_font_size_pt
     elif rule_id_prefix.startswith("typography.abstract"):
         actual_family = facts.typography.body_font
         actual_size = facts.typography.body_font_size_pt
@@ -660,10 +663,11 @@ def _typography_element(
                     rule_format.alignment,
                     dominant_alignment,
                     advice=(None if ok else
-                            f"The {label.lower()} should be {rule_format.alignment}-aligned; "
-                            f"the dominant body alignment is {dominant_alignment}."),
-                    evidence=f"alignment_distribution={facts.typography.alignment_distribution}",
-                    confidence="low",
+                            f"The {label.lower()} should be {rule_format.alignment}-aligned, "
+                            f"but is {dominant_alignment}-aligned."),
+                    evidence=(f"alignment_distribution={facts.typography.alignment_distribution}"
+                              if rule_id_prefix.startswith("typography.body") else None),
+                    confidence="high" if facts.parser in ("docx", "latex") else "low",
                 )
             )
 
@@ -671,14 +675,18 @@ def _typography_element(
 
 
 def _dominant_alignment(facts: PaperFacts, rule_id_prefix: str) -> Optional[str]:
-    dist = facts.typography.alignment_distribution
-    if not dist:
-        return None
+    # Each element is judged by its own alignment. Falling back to the body's
+    # would pass a centred-title rule on a justified body, or fail it at random.
+    typo = facts.typography
     if rule_id_prefix.startswith("typography.body"):
-        return max(dist.items(), key=lambda kv: kv[1])[0]
-    if rule_id_prefix.startswith(("typography.abstract", "typography.heading", "typography.title")):
-        return max(dist.items(), key=lambda kv: kv[1])[0]
-    return None
+        dist = typo.alignment_distribution
+        return max(dist.items(), key=lambda kv: kv[1])[0] if dist else None
+    return {
+        "typography.title": typo.title_alignment,
+        "typography.abstract": typo.abstract_alignment,
+        "typography.heading": typo.heading_alignment,
+        "typography.subheading": typo.subheading_alignment,
+    }.get(rule_id_prefix)
 
 
 def _check_typography(rules: RuleSet, facts: PaperFacts) -> list[CheckResult]:
@@ -693,6 +701,10 @@ def _check_typography(rules: RuleSet, facts: PaperFacts) -> list[CheckResult]:
     out.extend(
         _typography_element("typography.heading", "Heading", typo.headings, facts, tol,
                             "Apply the template's heading style.")
+    )
+    out.extend(
+        _typography_element("typography.subheading", "Subheading", typo.subheadings, facts, tol,
+                            "Apply the template's subsection heading style.")
     )
     out.extend(
         _typography_element("typography.abstract", "Abstract", typo.abstract, facts, tol,

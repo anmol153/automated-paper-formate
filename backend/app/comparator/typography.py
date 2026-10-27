@@ -1,7 +1,7 @@
 from app.models.document import NormalizedDocument
 from app.models.rules import TemplateRules
 from app.models.report import CheckResult
-from app.parsing.structure import aggregate_formats
+from app.parsing.structure import aggregate_formats, split_heading_levels
 
 from .utils import build_check, compare_equal, compare_font, compare_size
 
@@ -72,12 +72,17 @@ def compare_typography(rules: TemplateRules, paper: NormalizedDocument) -> list[
         else:
             results.extend(_missing_checks("Body", "typography", rules.body))
 
-    heading_blocks = paper.headings()
-    if rules.headings is not None:
-        dominant_heading = aggregate_formats([b.format for b in heading_blocks]) if heading_blocks else None
+    section_headings, subsection_headings = split_heading_levels(paper.headings())
+    for label, rule_format, blocks in (
+        ("Heading", rules.headings, section_headings),
+        ("Subheading", rules.subheadings, subsection_headings),
+    ):
+        if rule_format is None:
+            continue
+        dominant_heading = aggregate_formats([b.format for b in blocks]) if blocks else None
         if dominant_heading:
-            results.extend(_format_checks("Heading", rules.headings, dominant_heading))
+            results.extend(_format_checks(label, rule_format, dominant_heading))
         else:
-            results.extend(_missing_checks("Heading", "typography", rules.headings))
+            results.extend(_missing_checks(label, "typography", rule_format))
 
     return results

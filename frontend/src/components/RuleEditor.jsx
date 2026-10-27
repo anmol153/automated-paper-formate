@@ -404,7 +404,8 @@ export default function RuleEditor({ rules, onChange, disabled }) {
           ["title", "Title"],
           ["authors", "Author block"],
           ["abstract", "Abstract"],
-          ["headings", "Headings"],
+          ["headings", "Section headings"],
+          ["subheadings", "Subsection headings"],
           ["body", "Body text"],
         ].map(([key, label]) => (
           <FormatRow

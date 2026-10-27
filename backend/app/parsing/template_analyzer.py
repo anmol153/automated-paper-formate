@@ -1,6 +1,6 @@
 from app.models.document import NormalizedDocument
 from app.models.rules import CANONICAL_SECTION_ORDER, DocumentRule, TemplateRules
-from app.parsing.structure import aggregate_formats
+from app.parsing.structure import aggregate_formats, split_heading_levels
 
 _EXCLUDED_FROM_BODY = {"References", "Acknowledgments", "Appendix"}
 
@@ -11,7 +11,11 @@ def analyze_template(doc: NormalizedDocument) -> TemplateRules:
     abstract_block = doc.find("abstract")
 
     heading_blocks = doc.headings()
-    headings_format = aggregate_formats([b.format for b in heading_blocks]) if heading_blocks else None
+    section_headings, subsection_headings = split_heading_levels(heading_blocks)
+    headings_format = aggregate_formats([b.format for b in section_headings]) if section_headings else None
+    subheadings_format = (
+        aggregate_formats([b.format for b in subsection_headings]) if subsection_headings else None
+    )
 
     body_blocks = doc.body_blocks(exclude_parents=_EXCLUDED_FROM_BODY)
     body_format = aggregate_formats([b.format for b in body_blocks]) if body_blocks else None
@@ -37,5 +41,6 @@ def analyze_template(doc: NormalizedDocument) -> TemplateRules:
         keywords_required=bool(doc.find("keywords")),
         required_sections=required_sections,
         headings=headings_format,
+        subheadings=subheadings_format,
         body=body_format,
     )

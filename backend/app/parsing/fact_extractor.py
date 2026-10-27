@@ -31,7 +31,7 @@ from app.models.facts import (
     TypographyFacts,
 )
 from app.models.report import PaperMetadata
-from app.parsing.structure import aggregate_formats
+from app.parsing.structure import aggregate_formats, split_heading_levels
 
 MAX_ANON_SNIPPET = 400
 
@@ -511,6 +511,12 @@ def build_facts(
     )
     body_sizes = sorted({b.format.font_size_pt for b in body_blocks if b.format.font_size_pt})
 
+    section_headings, subsection_headings = split_heading_levels(heading_blocks)
+    section_format = aggregate_formats([b.format for b in section_headings]) if section_headings else None
+    subsection_format = (
+        aggregate_formats([b.format for b in subsection_headings]) if subsection_headings else None
+    )
+
     heading_levels: dict[str, float] = {}
     for block in heading_blocks:
         if block.format.font_size_pt:
@@ -522,9 +528,12 @@ def build_facts(
         body_font=body_format.font_family if body_format else None,
         body_font_size_pt=body_format.font_size_pt if body_format else None,
         title_font_size_pt=title_block.format.font_size_pt if title_block else None,
-        heading_font_size_pt=aggregate_formats([b.format for b in heading_blocks]).font_size_pt
-        if heading_blocks
-        else None,
+        heading_font_size_pt=section_format.font_size_pt if section_format else None,
+        subheading_font_size_pt=subsection_format.font_size_pt if subsection_format else None,
+        title_alignment=title_block.format.alignment if title_block else None,
+        abstract_alignment=abstract_block.format.alignment if abstract_block else None,
+        heading_alignment=section_format.alignment if section_format else None,
+        subheading_alignment=subsection_format.alignment if subsection_format else None,
         heading_levels=heading_levels,
         line_spacing=body_format.line_spacing if body_format else None,
         alignment_distribution=dict(alignment_counts),

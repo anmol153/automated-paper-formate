@@ -24,7 +24,7 @@ from app.models.rules import (
     ToleranceRule,
     TypographyRule,
 )
-from app.parsing.structure import aggregate_formats
+from app.parsing.structure import aggregate_formats, split_heading_levels
 from app.parsing.template_analyzer import analyze_template
 from app.parsing.venue_families import (
     LNCS_PRESET,
@@ -96,9 +96,12 @@ def _body_format(doc: NormalizedDocument) -> TextFormat | None:
     return aggregate_formats([b.format for b in blocks], weights)
 
 
-def _heading_format(doc: NormalizedDocument) -> TextFormat | None:
-    blocks = doc.headings()
-    return aggregate_formats([b.format for b in blocks]) if blocks else None
+def _heading_formats(doc: NormalizedDocument) -> tuple[TextFormat | None, TextFormat | None]:
+    sections, subsections = split_heading_levels(doc.headings())
+    return (
+        aggregate_formats([b.format for b in sections]) if sections else None,
+        aggregate_formats([b.format for b in subsections]) if subsections else None,
+    )
 
 
 def _infer_anonymisation(doc: NormalizedDocument) -> AnonymisationRule:
@@ -147,6 +150,7 @@ def infer_ruleset_from_template(
     )
 
     body = _body_format(doc)
+    headings, subheadings = _heading_formats(doc)
     paragraph = ParagraphRule(
         line_spacing=body.line_spacing if body else None,
         indent_first_line_pt=body.indent_first_line_pt if body else None,
@@ -158,7 +162,8 @@ def infer_ruleset_from_template(
         title=analysed.title,
         authors=analysed.authors,
         abstract=analysed.abstract,
-        headings=_heading_format(doc),
+        headings=headings,
+        subheadings=subheadings,
         body=body,
         tolerance=ToleranceRule(
             allowed_font_families=[body.font_family] if body and body.font_family else [],
@@ -299,6 +304,9 @@ def rule_schema() -> dict:
                     {"path": "typography.heading.font_family", "type": "text"},
                     {"path": "typography.heading.font_size_pt", "type": "number"},
                     {"path": "typography.heading.bold", "type": "bool"},
+                    {"path": "typography.subheading.font_family", "type": "text"},
+                    {"path": "typography.subheading.font_size_pt", "type": "number"},
+                    {"path": "typography.subheading.bold", "type": "bool"},
                     {"path": "typography.abstract.font_size_pt", "type": "number"},
                     {"path": "typography.tolerance.allowed_font_families", "type": "list[str]",
                      "help": "When set, any of these fonts is accepted instead of a single family."},

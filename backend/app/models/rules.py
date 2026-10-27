@@ -145,6 +145,9 @@ class TypographyRule(BaseModel):
     authors: Optional[TextFormat] = None
     abstract: Optional[TextFormat] = None
     headings: Optional[TextFormat] = None
+    # Second-level headings; set apart because most styles size them below
+    # section headings (LNCS: 12pt sections, 10pt subsections).
+    subheadings: Optional[TextFormat] = None
     body: Optional[TextFormat] = None
     tolerance: ToleranceRule = Field(default_factory=ToleranceRule)
 
@@ -199,6 +202,7 @@ class TemplateRules(BaseModel):
     keywords_required: bool = False
     required_sections: list[str] = Field(default_factory=list)
     headings: Optional[TextFormat] = None
+    subheadings: Optional[TextFormat] = None
     body: Optional[TextFormat] = None
 
 

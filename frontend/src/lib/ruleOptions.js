@@ -129,6 +129,7 @@ export function emptyRuleSet() {
       authors: null,
       abstract: null,
       headings: null,
+      subheadings: null,
       body: null,
       tolerance: {
         font_family: true,
