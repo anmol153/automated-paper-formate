@@ -11,7 +11,7 @@ from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
 
-MIGRATIONS = ((1, "001_initial.sql"), (2, "002_security.sql"), (3, "003_revisions.sql"), (4, "004_collaboration.sql"), (5, "005_reviews.sql"), (6, "006_conference_intake.sql"), (7, "007_google_auth.sql"), (8, "008_conference_invitations.sql"))
+MIGRATIONS = ((1, "001_initial.sql"), (2, "002_security.sql"), (3, "003_revisions.sql"), (4, "004_collaboration.sql"), (5, "005_reviews.sql"), (6, "006_conference_intake.sql"), (7, "007_google_auth.sql"), (8, "008_conference_invitations.sql"), (9, "009_conference_access_requests.sql"))
 
 
 def migration_scripts():

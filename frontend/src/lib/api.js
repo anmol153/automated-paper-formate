@@ -378,6 +378,22 @@ export async function removeConferenceMember(confId, userId) {
   return data;
 }
 
+export async function getMyConferenceAccessRequest(confId) {
+  return (await api.get(`/conferences/${confId}/access-requests/mine`)).data;
+}
+
+export async function requestConferenceAccess(confId, role) {
+  return (await api.post(`/conferences/${confId}/access-requests`, { role })).data;
+}
+
+export async function listConferenceAccessRequests(confId) {
+  return (await api.get(`/conferences/${confId}/access-requests`)).data;
+}
+
+export async function decideConferenceAccessRequest(confId, requestId, decision) {
+  return (await api.patch(`/conferences/${confId}/access-requests/${requestId}`, { decision })).data;
+}
+
 export async function listConferenceInvitations(confId, before) {
   return (await api.get(`/conferences/${confId}/invitations`, { params: { before } })).data;
 }

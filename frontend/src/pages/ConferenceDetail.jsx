@@ -10,6 +10,7 @@ import ConferenceInvitations from "../components/ConferenceInvitations.jsx";
 import ConferenceWorkflowPolicy from "../components/ConferenceWorkflowPolicy.jsx";
 import ReviewConfiguration from "../components/ReviewConfiguration.jsx";
 import ConferenceReviewProgress from "../components/ConferenceReviewProgress.jsx";
+import { AccessRequestForm } from "../components/ConferenceAccess.jsx";
 
 export default function ConferenceDetail() {
   const { confId } = useParams();
@@ -23,6 +24,7 @@ function ConferenceWorkspace({ confId }) {
   const [conference, setConference] = useState(null);
   const [settings, setSettings] = useState(null);
   const [error, setError] = useState("");
+  const [membershipRequired, setMembershipRequired] = useState(false);
   const [loading, setLoading] = useState(true);
   const [attempt, setAttempt] = useState(0);
   const [form, setForm] = useState({ name: "", description: "" });
@@ -31,7 +33,7 @@ function ConferenceWorkspace({ confId }) {
   useEffect(() => {
     if (!user) return;
     let active = true; setLoading(true); setError("");
-    Promise.all([getConference(confId), getConferenceSettings(confId)]).then(([conf, config]) => { if (active) { setConference(conf); setForm({ name: conf.name, description: conf.description || "" }); setSettings(config); } }).catch((err) => { if (active) setError(errorMessage(err)); }).finally(() => { if (active) setLoading(false); });
+    Promise.all([getConference(confId), getConferenceSettings(confId)]).then(([conf, config]) => { if (active) { setConference(conf); setForm({ name: conf.name, description: conf.description || "" }); setSettings(config); setMembershipRequired(false); } }).catch((err) => { if (active) { setError(errorMessage(err)); setMembershipRequired(err?.response?.status === 404); } }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [confId, user, attempt]);
   const chair = conference?.members?.some((member) => member.user_id === user?.user_id && member.role === "owner") || false;
@@ -39,7 +41,7 @@ function ConferenceWorkspace({ confId }) {
   if (authLoading) return <p role="status">Loading account…</p>;
   if (!user) return <div className="pf-management pf-empty"><h1>Conference workspace</h1><p>Sign in with a conference member account to continue.</p><ButtonLink variant="primary" to="/login">Sign in</ButtonLink></div>;
   return <div className="pf-management"><Link className="pf-back-link" to="/conferences">← Conferences</Link>
-    {loading ? <div className="pf-empty" role="status">Loading conference…</div> : !conference ? <div className="pf-card pf-empty"><h1>Conference unavailable</h1><p role="alert">{error}</p><p>Ask a conference chair for an invitation if you are not a member.</p><Button onClick={() => setAttempt((n) => n + 1)}>Retry conference</Button></div> : <>
+    {loading ? <div className="pf-empty" role="status">Loading conference…</div> : !conference ? <div className="pf-stack"><div className="pf-card pf-empty"><h1>{membershipRequired ? "Conference access required" : "Conference unavailable"}</h1><p role={membershipRequired ? "status" : "alert"}>{membershipRequired ? "You need conference membership to open this workspace." : error}</p>{!membershipRequired && <Button onClick={() => setAttempt((n) => n + 1)}>Retry conference</Button>}</div>{membershipRequired && <AccessRequestForm confId={confId} />}</div> : <>
       <header className="pf-management-header"><div><p className="pf-eyebrow">CONFERENCE WORKSPACE {chair && "· CHAIR"}</p><h1>{conference.name}</h1><p>{conference.description || "Your conference workspace for papers, people and peer review."}</p></div><ButtonLink variant="primary" to={`/conferences/${confId}/submissions`}>View papers →</ButtonLink></header>
       {params.get("created") === "1" && <div role="status" className="pf-message pf-created"><strong>Your conference is created.</strong> Next, configure your dates and publish a formatting template.<Button onClick={() => selectTab("settings")}>Continue setup →</Button></div>}
       <nav className="pf-workspace-tabs" aria-label="Conference sections">{tabs.filter((value) => value !== "invitations" || chair).map((value) => <Link key={value} to={`?tab=${value}`} aria-current={tab === value ? "page" : undefined}>{value[0].toUpperCase() + value.slice(1)}</Link>)}</nav>
