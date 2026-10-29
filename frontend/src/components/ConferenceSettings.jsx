@@ -23,7 +23,7 @@ function TrackEditor({ confId, track, onSaved, onError, disabled }) {
   </form>;
 }
 
-export default function ConferenceSettings({ confId, data, onChanged, expanded = false }) {
+export default function ConferenceSettings({ confId, data, onChanged, expanded = false, readOnly = false }) {
   const [form, setForm] = useState(null);
   const [track, setTrack] = useState({ name: "", description: "", active: true });
   const [busy, setBusy] = useState(false);
@@ -44,7 +44,7 @@ export default function ConferenceSettings({ confId, data, onChanged, expanded =
     {data.settings.lifecycle_status === "archived" && <p className="pf-message">This conference is archived. Its settings and tracks are read-only.</p>}
     {error && <div role="alert" className="pf-message pf-message--error">{error} <Button disabled={busy} onClick={() => { setError(""); reload().catch((err) => setError(errorMessage(err))); }}>Reload settings</Button></div>}
     {message && <p role="status" className="pf-inline-status">{message}</p>}</div>
-    {data.can_configure && data.settings.lifecycle_status !== "archived" && <details className="pf-settings-disclosure" open={expanded || undefined}>
+    {!readOnly && data.can_configure && data.settings.lifecycle_status !== "archived" && <details className="pf-settings-disclosure" open={expanded || undefined}>
       <summary className="cursor-pointer font-medium">Configure conference</summary>
       <form className="pf-settings-editor" onSubmit={async (e) => {
         e.preventDefault(); setBusy(true); setError(""); setMessage("");
@@ -62,8 +62,8 @@ export default function ConferenceSettings({ confId, data, onChanged, expanded =
     </details>}
     <div className="pf-card-heading pf-tracks-heading"><div><h3>Tracks</h3><p>Organize papers by topic or submission category.</p></div><span className="pf-count">{data.tracks.length}</span></div><div className="pf-card-body pf-stack">
     {!data.tracks.length && <p className="pf-track-empty">No tracks configured.</p>}
-    {data.tracks.map((item) => data.can_configure && data.settings.lifecycle_status !== "archived" ? <TrackEditor key={`${item.track_id}:${item.version}`} confId={confId} track={item} onSaved={reload} onError={setError} disabled={busy} /> : <div className="pf-track-editor" key={item.track_id}><h3>{item.name}{!item.active && " (archived)"}</h3><p>{item.description}</p></div>)}
-    {data.can_configure && data.settings.lifecycle_status !== "archived" && <form className="pf-stack pf-section-divider" onSubmit={async (e) => {
+    {data.tracks.map((item) => !readOnly && data.can_configure && data.settings.lifecycle_status !== "archived" ? <TrackEditor key={`${item.track_id}:${item.version}`} confId={confId} track={item} onSaved={reload} onError={setError} disabled={busy} /> : <div className="pf-track-editor" key={item.track_id}><h3>{item.name}{!item.active && " (archived)"}</h3><p>{item.description}</p></div>)}
+    {!readOnly && data.can_configure && data.settings.lifecycle_status !== "archived" && <form className="pf-stack pf-section-divider" onSubmit={async (e) => {
       e.preventDefault(); setBusy(true); setError("");
       try { await createConferenceTrack(confId, track); setTrack({ name: "", description: "", active: true }); await reload(); }
       catch (err) { setError(errorMessage(err)); }

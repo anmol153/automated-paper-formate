@@ -59,12 +59,26 @@ class Demo:
             self.state = json.loads(self.path.read_text())
             if self.state["api_base"] != args.api_base:
                 raise RuntimeError("Saved demo belongs to another API. Choose a different --state file.")
+            self.state.setdefault("accounts", {})
+            self.state.setdefault("steps", {})
+            self.state.setdefault("papers", {})
+            # Extend older walkthroughs in place without replacing their saved
+            # users, conference, papers, or revisions.
+            if "coauthor" not in self.state["accounts"]:
+                suffix = self.state.get("suffix", secrets.token_hex(3))
+                self.state["accounts"]["coauthor"] = {
+                    "email": f"coauthor-{suffix}@example.test",
+                    "password": "PaperDemo-" + secrets.token_urlsafe(9),
+                    "full_name": "Demo Coauthor",
+                }
+                self.state["complete"] = False
+                self.save()
         else:
             suffix = secrets.token_hex(3)
             password = "PaperDemo-" + secrets.token_urlsafe(9)
             self.state = {"api_base": args.api_base, "ui_base": args.ui_base, "suffix": suffix,
                           "accounts": {role: {"email": f"{role}-{suffix}@example.test", "password": password,
-                                                "full_name": f"Demo {role.title()}"} for role in ("chair", "author", "reviewer")},
+                                                "full_name": f"Demo {role.title()}"} for role in ("chair", "author", "reviewer", "coauthor")},
                           "steps": {}, "papers": {}}
             self.save()
         self.clients = {}
@@ -127,8 +141,9 @@ class Demo:
             "description": "Synthetic walkthrough data for Paper-Format. Explore author, reviewer and chair workflows. No real research or personal data."}))
         conference_id = conf["conference_id"]
         base = f"conferences/{conference_id}"
-        for role in ("author", "reviewer"):
-            self.once(f"membership-{role}", lambda role=role: self.call("chair", "POST", base + "/members", json={"user_id": self.state["accounts"][role]["user_id"], "role": role}))
+        for role in ("author", "reviewer", "coauthor"):
+            conference_role = "author" if role == "coauthor" else role
+            self.once(f"membership-{role}", lambda role=role, conference_role=conference_role: self.call("chair", "POST", base + "/members", json={"user_id": self.state["accounts"][role]["user_id"], "role": conference_role}))
         now = datetime.now(timezone.utc)
         settings = self.call("chair", "GET", base + "/settings")
         self.once("settings", lambda: self.call("chair", "PUT", base + "/settings", json={"expected_version": settings["version"], "settings": {
@@ -165,6 +180,8 @@ class Demo:
             self.save()
 
         main = self.state["papers"]["workspace"]["id"]
+        self.once("coauthor-access", lambda: self.call("author", "PUT", f"submissions/{main}/collaborators", json={
+            "user_id": self.state["accounts"]["coauthor"]["user_id"], "can_edit": True}))
         history = self.call("author", "GET", f"submissions/{main}/revisions")
         original = next(row for row in history["revisions"] if row["number"] == 1)
         updated = self.once("second-revision", lambda: self.call("author", "POST", f"submissions/{main}/revisions", files={"file": ("workspace-revised.pdf", (samples / "workspace-revised.pdf").read_bytes(), "application/pdf")}, data={
@@ -212,10 +229,15 @@ class Demo:
             threads = self.call(role, "GET", f"submissions/{paper_id}/conversation")
             if any(thread["visibility"] == "chairs" for thread in threads):
                 raise RuntimeError("Confidential demo thread was exposed")
+        collaborators = self.call("author", "GET", f"submissions/{paper_id}/collaborators")
+        if not any(row["user_id"] == self.state["accounts"]["coauthor"]["user_id"] and row["can_edit"] for row in collaborators["collaborators"]):
+            raise RuntimeError("Expected the demo co-author to have paper editing access")
+        if self.call("coauthor", "GET", f"submissions/{paper_id}")["submission_id"] != paper_id:
+            raise RuntimeError("The demo co-author could not open the shared paper")
         checks = self.call("author", "GET", f"submissions/{paper_id}/revisions")
         if len(checks["revisions"]) != 2:
             raise RuntimeError("Expected two immutable demo revisions")
-        print("Verified real lifecycle states, two revisions, and confidential-thread filtering.", flush=True)
+        print("Verified lifecycle states, two revisions, co-author access, and confidential-thread filtering.", flush=True)
 
     def describe(self):
         ui = self.state["ui_base"]

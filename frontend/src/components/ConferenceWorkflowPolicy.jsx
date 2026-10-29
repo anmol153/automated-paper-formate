@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { errorMessage, getConferenceWorkflow, setConferenceWorkflow } from "../lib/api.js";
 
-export default function ConferenceWorkflowPolicy({ confId }) {
+export default function ConferenceWorkflowPolicy({ confId, readOnly = false }) {
   const [policy, setPolicy] = useState(null);
   const [gate, setGate] = useState("allow_issues");
   const [busy, setBusy] = useState(false);
@@ -17,7 +17,7 @@ export default function ConferenceWorkflowPolicy({ confId }) {
     {error && <p role="alert" className="text-danger-600">{error}</p>}
     {!policy ? !error && <p role="status">Loading policy…</p> : <>
       <p className="text-sm">{policy.formatting_gate === "block_errors" ? "Papers with blocking formatting errors stay in draft until corrected. Warnings may proceed." : "Papers may proceed to review with formatting findings. A completed check is required."}</p>
-      {policy.can_configure && <form className="space-y-3" onSubmit={async (e) => {
+      {!readOnly && policy.can_configure && <form className="space-y-3" onSubmit={async (e) => {
         e.preventDefault(); setBusy(true); setError("");
         try { setPolicy(await setConferenceWorkflow(confId, gate)); }
         catch (err) { setError(errorMessage(err)); }

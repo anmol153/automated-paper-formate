@@ -29,7 +29,7 @@ function TemplatePage({ confId }) {
   if (!confId) return <p role="alert">Choose a conference from <Link to="/conferences" className="text-primary-600">Conferences</Link>.</p>;
   return <div className="pf-management pf-formatting pf-conference-content space-y-5">
     <Link className="text-primary-600" to={`/conferences/${confId}/submissions`}>← Conference papers</Link>
-    <header className="pf-management-header"><div><p className="pf-eyebrow">CONFERENCE FORMATTING</p><h1>{conference?.name || "Conference"} · Templates</h1><p>Published requirements, template versions and formatting rules.</p></div></header>
+    <header className="pf-management-header"><div><p className="pf-eyebrow">CONFERENCE FORMATTING</p><h1>{conference?.name || "Conference"} · Templates</h1><p>Published requirements, template versions and formatting rules.</p></div><Link className="btn-secondary" to={`/conferences/${confId}/submit`}>Submit a paper →</Link></header>
     {error ? <p role="alert">{error} <button className="btn-secondary" onClick={() => setReload((value) => value + 1)}>Retry conference</button></p> : !conference ? <p role="status">Loading conference…</p> : <ConferenceTemplates confId={confId} canPublish={conference.members?.some((member) => member.user_id === user.user_id && member.role === "owner")} />}
   </div>;
 }

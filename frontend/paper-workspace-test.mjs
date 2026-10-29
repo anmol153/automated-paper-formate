@@ -48,6 +48,13 @@ api.defaults.adapter = async (config) => {
   else if (path.endsWith("/comments/c1") && method === "delete") { threads[0].comments[0].deleted_at = "2026-10-19T09:00:00Z"; data = {}; }
   else if (path.endsWith("/conversation/t1") && method === "patch") { threads[0].resolved = body().resolved; data = {}; }
   else if (path.endsWith("/transitions")) { paper.status = workflow.status = body().target_status; workflow.actions = []; data = paper; }
+  else if (path.endsWith("/review") && method === "post") {
+    workflow.assignments.push({ assignment_id: "chair-assignment", reviewer_id: body(), status: "pending" });
+    paper.status = workflow.status = "under_review";
+    reviewData.assignment_id = "chair-assignment";
+    data = workflow.assignments.at(-1);
+  }
+  else if (path.endsWith("/conflicts") && method === "get") data = [];
   else if (path.endsWith("/reviews")) data = reviewData;
   else if (path.endsWith("/reviews/mine") && method === "put") data = {};
   else throw new Error(`Unexpected ${method} ${path}`);
@@ -88,7 +95,7 @@ try {
     workflow.is_chair = true; const view = await mount("?tab=conversation"); try { const composer = view.container.querySelector(".pf-conversation-composer"); await text(composer.querySelector("textarea"), "Chair follow-up"); await choose(composer.querySelectorAll("select")[0], "r1"); await text(composer.querySelector('input[type="number"]'), "3"); await choose(composer.querySelectorAll("select")[1], "chairs"); await click(view, "Post comment"); const sent = calls.find((call) => call.method === "post" && call.url.endsWith("/conversation")); assert.deepEqual(JSON.parse(sent.data), { body: "Chair follow-up", revision_id: "r1", page_number: 3, visibility: "chairs" }); } finally { await view.close(); }
   });
   await test("reply, edit and resolve/reopen keep existing API version and parent contracts", async () => {
-    const view = await mount("?tab=conversation"); try { await click(view, "Reply to this comment"); await text(view.container.querySelector("article form textarea"), "A threaded response"); await click(view, "Post reply"); assert.equal(JSON.parse(calls.find((call) => call.url.endsWith("/comments") && call.method === "post").data).parent_comment_id, "c1"); await act(async () => [...view.container.querySelectorAll("article button")].find((node) => node.textContent === "Edit").click()); await flush(); await text(view.container.querySelector("article textarea"), "Updated feedback"); await click(view, "Save comment"); assert.equal(JSON.parse(calls.find((call) => call.method === "patch" && call.url.endsWith("/comments/c1")).data).expected_version, 1); await click(view, "Resolve thread"); assert.match(view.container.querySelector("article").getAttribute("aria-label"), /^Resolved/); await click(view, "Reopen thread"); assert.equal(threads[0].resolved, false); } finally { await view.close(); }
+    const view = await mount("?tab=conversation"); try { await click(view, "Reply"); await text(view.container.querySelector("article form textarea"), "A threaded response"); await click(view, "Post reply"); assert.equal(JSON.parse(calls.find((call) => call.url.endsWith("/comments") && call.method === "post").data).parent_comment_id, "c1"); await act(async () => [...view.container.querySelectorAll("article button")].find((node) => node.textContent === "Edit").click()); await flush(); await text(view.container.querySelector("article textarea"), "Updated feedback"); await click(view, "Save comment"); assert.equal(JSON.parse(calls.find((call) => call.method === "patch" && call.url.endsWith("/comments/c1")).data).expected_version, 1); await click(view, "Resolve thread"); assert.match(view.container.querySelector("article").getAttribute("aria-label"), /^Resolved/); await click(view, "Reopen thread"); assert.equal(threads[0].resolved, false); } finally { await view.close(); }
   });
   await test("current workflow transitions retain status/revision concurrency guards", async () => {
     const view = await mount("?tab=overview&revision=r1"); try { await choose(view.container.querySelector(".pf-paper-workflow select"), "submitted"); await click(view, "Apply action"); assert.deepEqual(JSON.parse(calls.find((call) => call.url.endsWith("/transitions")).data), { target_status: "submitted", expected_status: "draft", expected_revision_id: "r2", reason: "" }); assert.match(view.container.querySelector("header").textContent, /Submitted/); } finally { await view.close(); }
@@ -150,10 +157,17 @@ try {
       assert.equal(view.container.querySelectorAll(".pf-paper-tabs a").length, 4);
       assert.match(view.container.querySelector('[aria-label="Submission description"]').textContent, /A practical approach/);
       assert.equal(view.container.querySelectorAll(".pf-pr-revision-event").length, 2);
+      const composer = view.container.querySelector(".pf-conversation-composer");
+      await text(composer.querySelector("textarea"), "Preview my comment");
+      await click(view, "Preview");
+      assert.equal(composer.querySelector("#comment-preview-panel").hidden, false);
+      assert.equal(composer.querySelector("#comment-preview-panel").textContent, "Preview my comment");
+      await click(view, "Write");
+      assert.equal(composer.querySelector("textarea").value, "Preview my comment");
       assert.match(view.container.querySelector(".pf-pr-revision-event a").getAttribute("href"), /tab=files&revision=r1/);
       assert.ok(!view.container.querySelector(".pf-paper-workflow"));
       const reply = view.container.querySelector(".pf-thread-reply"); assert.equal(reply.open, false);
-      await click(view, "Reply to this comment"); assert.equal(reply.open, true); assert.equal(document.activeElement.tagName, "TEXTAREA");
+      await click(view, "Reply"); assert.equal(reply.open, true); assert.equal(document.activeElement.tagName, "TEXTAREA");
     } finally { await view.close(); }
   });
   await test("formal review keeps the PR sidebar, revision guard and existing draft payload", async () => {
@@ -171,6 +185,28 @@ try {
       await click(view, "Save private draft");
       const payload = JSON.parse(calls.find((call) => call.url.endsWith("/reviews/mine")).data);
       assert.equal(payload.revision_id, "r2"); assert.equal(payload.assignment_id, "a1"); assert.equal(payload.form_id, "form1"); assert.equal(payload.submit, false); assert.equal(payload.expected_version, 0); assert.equal(payload.answers.quality, 4);
+    } finally { await view.close(); }
+  });
+  await test("chair can start their own review from the paper and use the normal private draft and submission form", async () => {
+    role = "chair"; workflow.is_chair = true; paper.status = workflow.status = "submitted";
+    reviewData = { is_chair: true, reviews: [], can_review: true, assignment_id: null, revision_id: "r2", own_review: null,
+      configuration: { form_id: "chair-form", policy: { minimum_reviews: 1, reviewer_identities: "hidden" }, form: { name: "Research review", recommendations: ["Accept", "Reject"], criteria: [{ id: "quality", label: "Technical quality", kind: "score", minimum: 1, maximum: 5, required: true, visibility: "authors" }] } },
+      progress: { submitted: 0, missing: 1, assignments: [] } };
+    const view = await mount(); try {
+      await click(view, "Review this paper");
+      assert.equal(JSON.parse(calls.find((call) => call.url === "/submissions/paper/review").data), "chair");
+      assert.equal(view.location().search, "?tab=reviews");
+      assert.equal(view.container.querySelector(".pf-pr-review-editor fieldset").disabled, false);
+      await choose(view.container.querySelector(".pf-pr-review-editor select"), "Accept");
+      await text(view.container.querySelector('input[type="number"]'), "4");
+      await click(view, "Save private draft");
+      const draft = JSON.parse(calls.find((call) => call.url.endsWith("/reviews/mine")).data);
+      assert.equal(draft.assignment_id, "chair-assignment"); assert.equal(draft.submit, false);
+      await act(async () => view.container.querySelector(".pf-pr-review-editor form").dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true })));
+      await flush();
+      const submitted = JSON.parse(calls.filter((call) => call.url.endsWith("/reviews/mine")).at(-1).data);
+      assert.equal(submitted.submit, true); assert.equal(submitted.recommendation, "Accept"); assert.equal(submitted.answers.quality, 4);
+      assert.equal(calls.filter((call) => call.url === "/submissions/paper/review").length, 1);
     } finally { await view.close(); }
   });
   console.log(`${passed} D2 paper workspace scenarios passed.`);

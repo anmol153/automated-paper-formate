@@ -262,3 +262,74 @@
   .pf-thread-reply { padding: 4px 12px; }
   .is-pr-thread .pf-thread-context .btn-secondary { min-height: 44px; }
 }
+
+
+/* GitHub PR conversation: avatar rail, connected events and bordered comments. */
+.pf-paper-conversation { display: grid; gap: 24px; }
+.pf-paper-conversation .pf-discussion-entry { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 16px; align-items: start; }
+.pf-paper-conversation .pf-timeline-avatar { display: grid; width: 36px; height: 36px; position: relative; z-index: 1; background: var(--pf-selected); }
+.pf-paper-conversation .pf-pr-description-card { border-radius: 6px; }
+.pf-paper-conversation .pf-pr-description-card > header { padding: 12px 16px; background: var(--pf-subtle); }
+.pf-paper-conversation .pf-pr-description-card > div { padding: 20px 16px; }
+.pf-paper-conversation .pf-discussion-timeline { position: relative; display: grid; gap: 24px; }
+.pf-paper-conversation .pf-discussion-timeline:not(:empty)::before { display: block; content: ""; position: absolute; left: 17px; top: 0; bottom: 0; width: 2px; background: var(--pf-border); }
+.pf-paper-conversation .pf-pr-revision-event { grid-template-columns: 36px minmax(0, 1fr); gap: 16px; padding: 4px 0; }
+.pf-paper-conversation .pf-revision-event-mark { z-index: 1; width: 30px; height: 30px; margin-left: 3px; border: 3px solid var(--pf-surface); background: var(--pf-subtle); color: var(--pf-muted); }
+.pf-paper-conversation .pf-pr-discussion-tools { margin-left: 52px; padding: 0 0 12px; gap: 12px; }
+.pf-pr-discussion-tools h2 { font-size: 14px; }
+.pf-paper-conversation .pf-conversation-thread { border-radius: 6px; border-left-width: 1px; }
+.pf-paper-conversation .pf-comment-byline { padding: 10px 16px; gap: 6px; background: var(--pf-subtle); border-radius: 6px 6px 0 0; font-size: 12px; }
+.pf-paper-conversation .pf-comment-byline strong { order: 1; font-size: 13px; }
+.pf-commented-label { order: 2; }
+.pf-paper-conversation .pf-comment-byline time { order: 3; }
+.pf-paper-conversation .pf-comment-role { order: 4; margin-left: auto; }
+.pf-paper-conversation .pf-comment-byline > .pf-comment-more { order: 5; }
+.pf-paper-conversation .pf-conversation-thread .pf-conversation-comment > p { padding: 20px 16px; font-size: 14px; line-height: 1.65; }
+.pf-paper-conversation .pf-thread-context { padding: 10px 16px; background: var(--pf-surface); gap: 10px; }
+.pf-thread-inline-actions { align-items: center; }
+.pf-comment-more { position: relative; }
+.pf-comment-more > summary { cursor: pointer; list-style: none; min-width: 28px; min-height: 28px; display: grid; place-content: center; color: var(--pf-muted); letter-spacing: 2px; }
+.pf-comment-more > summary::-webkit-details-marker { display: none; }
+.pf-comment-more > div { position: absolute; right: 0; top: 32px; z-index: 10; display: grid; min-width: 150px; padding: 6px 0; border: 1px solid var(--pf-border); border-radius: 6px; background: var(--pf-surface); box-shadow: 0 8px 24px #0002; }
+.pf-comment-more button { text-align: left; padding: 8px 16px; font-size: 13px; }
+.pf-comment-more button:hover { background: var(--pf-subtle); }
+.pf-paper-conversation .pf-conversation-composer { width: 100%; min-width: 0; margin: 0; padding: 0; gap: 16px; border-radius: 6px; overflow: hidden; }
+.pf-comment-editor-tabs { display: flex; align-items: end; gap: 4px; width: 100%; padding: 8px 8px 0; border-bottom: 1px solid var(--pf-border); background: var(--pf-subtle); }
+.pf-comment-editor-tabs button { padding: 9px 16px; border: 1px solid transparent; border-radius: 6px 6px 0 0; font-size: 13px; color: var(--pf-muted); }
+.pf-comment-editor-tabs button[aria-selected="true"] { border-color: var(--pf-border); border-bottom-color: var(--pf-surface); margin-bottom: -1px; background: var(--pf-surface); color: var(--pf-text); }
+.pf-conversation-composer > [role="tabpanel"] { width: 100%; min-width: 0; padding: 0 12px; }
+.pf-conversation-composer textarea.input-base { min-height: 140px; padding: 12px; margin: 0; border-radius: 6px; background: var(--pf-canvas); }
+.pf-comment-preview { white-space: pre-wrap; overflow-wrap: anywhere; min-height: 140px; line-height: 1.65; font-size: 14px; }
+.pf-conversation-composer [hidden] { display: none; }
+.pf-conversation-composer .pf-composer-footer { width: 100%; padding: 0 12px 12px; align-items: center; gap: 12px; }
+.pf-conversation-composer .pf-composer-footer > .btn-primary { background: var(--pf-success); color: #fff; border-color: var(--pf-success); }
+.pf-composer-settings { min-width: 0; }
+.pf-composer-settings > summary { cursor: pointer; color: var(--pf-muted); font-size: 12px; padding: 8px 0; }
+.pf-composer-settings .pf-composer-options { padding-top: 12px; }
+.pf-conversation-composer .pf-confidential-notice { margin: 0; padding: 0 12px 12px; }
+.pf-conversation-status { margin-left: 52px; color: var(--pf-muted); font-size: 12px; }
+.pf-conversation-status > summary { cursor: pointer; padding: 8px 0; }
+.pf-paper-conversation .pf-pr-review-status { margin: 12px 0 0; }
+@media (max-width: 600px) {
+  .pf-paper-conversation .pf-discussion-entry, .pf-paper-conversation .pf-pr-revision-event { grid-template-columns: 28px minmax(0, 1fr); gap: 8px; }
+  .pf-paper-conversation .pf-timeline-avatar { width: 28px; height: 28px; font-size: 12px; }
+  .pf-paper-conversation .pf-discussion-timeline:not(:empty)::before { left: 13px; }
+  .pf-paper-conversation .pf-revision-event-mark { width: 26px; height: 26px; margin-left: 1px; }
+  .pf-paper-conversation .pf-pr-discussion-tools, .pf-conversation-status { margin-left: 36px; }
+  .pf-paper-conversation .pf-comment-byline { padding: 10px 12px; }
+  .pf-paper-conversation .pf-comment-byline time { flex-basis: 100%; }
+  .pf-paper-conversation .pf-conversation-thread .pf-conversation-comment > p { padding: 16px 12px; }
+  .pf-paper-conversation .pf-thread-context { padding: 10px 12px; }
+  .pf-paper-conversation .pf-conversation-composer { padding: 0; margin: 0; }
+  .pf-composer-settings { width: 100%; }
+  .pf-composer-options { grid-template-columns: minmax(0, 1fr); }
+  .pf-thread-inline-actions > button, .pf-comment-more > summary { min-height: 44px; }
+}
+
+/* Quiet, right-aligned reply action for both single comments and threads. */
+.pf-comment-actions { display: flex; justify-content: flex-end; padding: 0 16px 10px; }
+.pf-thread-context > .pf-thread-inline-actions { order: 3; margin-left: auto; }
+.pf-thread-context > .btn-secondary { order: 2; }
+.pf-thread-context > p { flex: 1; }
+.pf-conversation-thread .pf-comment-reply { font-size: 11px; font-weight: 400; line-height: 1.4; color: var(--pf-muted); border: 0; background: transparent; padding: 4px 2px; white-space: nowrap; }
+.pf-conversation-thread .pf-comment-reply:hover { color: var(--pf-accent); text-decoration: underline; }

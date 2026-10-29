@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { CANONICAL_SECTIONS, EXTENSION_CHOICES, METADATA_FIELDS } from "../lib/ruleOptions.js";
 
 export default function RuleEditor({ rules, onChange, disabled }) {
@@ -12,7 +12,7 @@ export default function RuleEditor({ rules, onChange, disabled }) {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 pf-rule-editor">
       <Panel title="Template" subtitle="Basic template identification">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Template name" hint="Shown to authors when they submit.">
@@ -601,33 +601,15 @@ function Field({ label, hint, children }) {
 }
 
 function Toggle({ label, hint, checked, disabled, onChange }) {
-  return (
-    <label className={`flex cursor-pointer items-start gap-3 ${disabled ? "cursor-not-allowed opacity-60" : ""}`}>
-      <span className="relative mt-0.5 flex-shrink-0">
-        <input
-          type="checkbox"
-          className="sr-only"
-          checked={Boolean(checked)}
-          disabled={disabled}
-          onChange={(e) => onChange(e.target.checked)}
-        />
-        <span
-          className={`toggle-track block h-5 w-9 rounded-full transition-colors duration-200 ${
-            checked ? "bg-primary-600" : "bg-surface-300 dark:bg-surface-600"
-          }`}
-        />
-        <span
-          className={`absolute left-0.5 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-white shadow-lg transition-transform duration-200 ${
-            checked ? "translate-x-5" : "translate-x-0"
-          } dark:bg-surface-300`}
-        />
-      </span>
-      <span>
-        <span className="block text-sm text-surface-700 dark:text-surface-300">{label}</span>
-        {hint && <span className="block text-xs text-surface-500 dark:text-surface-400" dangerouslySetInnerHTML={{ __html: hint }} />}
-      </span>
-    </label>
-  );
+  const hintId = useId();
+  return <label className="pf-rule-check" data-disabled={disabled || undefined}>
+    <input type="checkbox" className="pf-rule-checkbox" aria-label={label} aria-describedby={hint ? hintId : undefined}
+      checked={Boolean(checked)} disabled={disabled} onChange={(event) => onChange(event.target.checked)} />
+    <span className="pf-rule-check-copy"><span className="pf-rule-check-title">{label}</span>
+      {hint && <span id={hintId} className="pf-rule-check-hint" dangerouslySetInnerHTML={{ __html: hint }} />}
+    </span>
+    {disabled && <span className="pf-rule-check-value" data-checked={Boolean(checked)} aria-hidden="true">{checked ? "Yes" : "No"}</span>}
+  </label>;
 }
 
 function NumberInput({ value, disabled, step = "1", onChange }) {

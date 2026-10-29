@@ -7,7 +7,7 @@ function localTime(value) {
   return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 }
 
-export default function ReviewConfiguration({ confId }) {
+export default function ReviewConfiguration({ confId, readOnly = false }) {
   const [data, setData] = useState(null);
   const [form, setForm] = useState(null);
   const [policy, setPolicy] = useState(null);
@@ -41,7 +41,7 @@ export default function ReviewConfiguration({ confId }) {
     {error && <p role="alert" className="text-danger-600">{error} <button className="btn-secondary ml-2" disabled={busy} onClick={() => { setError(""); setRefresh((n) => n + 1); }}>Reload configuration</button></p>}
     {!data ? !error && <p role="status">Loading review configuration…</p> : <>
       <p className="text-sm">Form version {data.form_number || "not published"} · Minimum current-revision reviews for a decision: {data.policy.minimum_reviews}</p>
-      {!data.can_configure ? <p className="text-sm">Review deadline: {data.policy.deadline ? new Date(data.policy.deadline).toLocaleString() : "No deadline configured"}</p> : <details>
+      {readOnly || !data.can_configure ? <p className="text-sm">Review deadline: {data.policy.deadline ? new Date(data.policy.deadline).toLocaleString() : "No deadline configured"}</p> : <details>
         <summary className="cursor-pointer font-medium">Configure criteria, visibility and deadlines</summary>
         <form className="space-y-4 mt-4" onSubmit={save}>
           <p className="text-sm text-surface-500">Existing reviews keep their form version. Identity and recommendation visibility changes apply to future releases.</p>

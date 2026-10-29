@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import PublishedRules from "./PublishedRules.jsx";
 import RuleEditor from "./RuleEditor.jsx";
 import { emptyRuleSet } from "../lib/ruleOptions.js";
 import {
@@ -8,6 +9,11 @@ import {
 } from "../lib/api.js";
 
 export default function ConferenceTemplates({ confId, canPublish, onAvailabilityChange }) {
+  const [query, setQuery] = useSearchParams();
+  const requestedView = query.get("templateView") || "published";
+  const view = requestedView === "configure" && canPublish ? "configure" : requestedView === "compare" ? "compare" : "published";
+  const viewUrl = (next) => { const params = new URLSearchParams(query); params.set("templateView", next); return `?${params}`; };
+  const showPublished = () => setQuery((previous) => { const params = new URLSearchParams(previous); params.set("templateView", "published"); return params; });
   const [versions, setVersions] = useState([]);
   const [selected, setSelected] = useState("");
   const [snapshot, setSnapshot] = useState(null);
@@ -42,12 +48,12 @@ export default function ConferenceTemplates({ confId, canPublish, onAvailability
   }, [confId, reload, reportAvailability]);
 
   useEffect(() => {
-    if (!canPublish) return;
+    if (!canPublish || view !== "configure") return;
     let active = true;
     listTemplates().then((rows) => { if (active) { setLibrary(rows); setLibraryError(""); } })
       .catch((err) => { if (active) setLibraryError(errorMessage(err)); });
     return () => { active = false; };
-  }, [canPublish, reload]);
+  }, [canPublish, reload, view]);
 
   async function editFrom(loader) {
     setBusy(true); setError(""); setNotice("");
@@ -72,7 +78,7 @@ export default function ConferenceTemplates({ confId, canPublish, onAvailability
       setSnapshot(saved); setSelected(saved.template_id);
       // Publishing succeeded even if a subsequent history refresh fails.
       setNotice(`Published “${saved.name}” as a new conference template version.`);
-      setReload((value) => value + 1);
+      setReload((value) => value + 1); showPublished();
     } catch (err) { setError(errorMessage(err)); }
     finally { setBusy(false); }
   }
@@ -80,25 +86,25 @@ export default function ConferenceTemplates({ confId, canPublish, onAvailability
   return <section className="panel p-5 space-y-4" aria-label="Conference templates">
     <h2 className="text-lg font-semibold">Conference template</h2>
     <p className="text-sm text-surface-500">New papers use the latest published version. Existing papers and their revisions keep their original template and reports.</p>
+    <nav className="pf-template-view-nav" aria-label="Template views"><Link to={viewUrl("published")} aria-current={view === "published" ? "page" : undefined}>View published rules</Link>{canPublish && <Link to={viewUrl("configure")} aria-current={view === "configure" ? "page" : undefined}>Configure a template</Link>}<Link to={viewUrl("compare")} aria-current={view === "compare" ? "page" : undefined}>Compare versions</Link></nav>
     {loading && <p role="status">Loading conference template…</p>}
     {error && <p role="alert" className="text-danger-600">{error} <button type="button" className="btn-secondary" disabled={busy} onClick={() => setReload((value) => value + 1)}>Reload templates</button></p>}
     {notice && <p role="status">{notice}</p>}
-    {!loading && !versions.length && !error && <p>No template has been published. {canPublish ? "Configure and publish one below before authors upload papers." : "Ask a conference chair to publish the formatting requirements before uploading."}</p>}
-    {!loading && versions.length > 0 && <>
+    {!loading && !versions.length && !error && <p>No template has been published. {canPublish ? "Open Configure a template to publish requirements before authors upload papers." : "Ask a conference chair to publish the formatting requirements before uploading."}</p>}
+    {view === "published" && !loading && versions.length > 0 && <>
       <label className="block">Published template version
         <select className="input-base mt-1" value={selected} disabled={busy} onChange={(event) => viewVersion(event.target.value)}>
           {versions.map(([id, , created], index) => <option key={id} value={id}>{index === 0 ? "Latest · " : ""}{id} · {new Date(created).toLocaleString()}</option>)}
         </select>
       </label>
       {snapshot && <>
-        <p className="font-medium">{snapshot.name}</p>
         {selected !== versions[0][0] && <p className="text-sm">Viewing a previous version. New papers use the latest published version.</p>}
-        <details><summary className="cursor-pointer">View published rules</summary><div className="mt-4"><RuleEditor rules={snapshot} disabled /></div></details>
+        <PublishedRules rules={snapshot} />
       </>}
-      {versions.length > 1 && <Link className="text-primary-600" to={`/conferences/${confId}/diff?old=${encodeURIComponent(versions[1][0])}&new=${encodeURIComponent(versions[0][0])}`}>Compare the two latest template versions</Link>}
     </>}
-    {canPublish && <details>
-      <summary className="cursor-pointer font-medium">Configure a template</summary>
+    {view === "compare" && !loading && <section className="pf-template-comparison-entry"><h3>Compare published versions</h3>{versions.length > 1 ? <><p>Review differences on a separate comparison page.</p><Link className="btn-secondary" to={`/conferences/${confId}/diff?old=${encodeURIComponent(versions[1][0])}&new=${encodeURIComponent(versions[0][0])}`}>Compare the two latest template versions</Link></> : <p>Publish at least two versions before comparing template rules.</p>}</section>}
+    {view === "configure" && canPublish && <section aria-label="Configure template">
+      <h3>Configure a template</h3>
       <div className="mt-4 space-y-4">
         <p className="text-sm">Import a template file, use saved standalone rules, or start with a blank template. Review the rules before publishing.</p>
         {libraryError && <p role="alert" className="text-danger-600">Saved template library: {libraryError}</p>}
@@ -127,6 +133,6 @@ export default function ConferenceTemplates({ confId, canPublish, onAvailability
           </div>
         </form>}
       </div>
-    </details>}
+    </section>}
   </section>;
 }

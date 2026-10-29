@@ -46,6 +46,7 @@ api.defaults.adapter = async (request) => {
   else if (url === "/reviewer/conflicts/conflict-one/withdraw") { ownConflict = null; data = {}; }
   else if (url === "/reviewer/workspace") { if (failReviews) reject(request, "Reviews unavailable"); data = { assignments: [{ assignment_id: "a", submission_id: "p", title: "A sample research paper", status: "under_review", review_state: "not_started", deadline: null }, { assignment_id: "b", submission_id: "q", title: "Completed paper", status: "under_review", review_state: "submitted" }].filter((item) => !removedAssignment || item.assignment_id !== "a"), conflicts: ownConflict ? [ownConflict] : [] }; }
   else reject(request, `Unexpected request ${method} ${url}`);
+  if (url === "/reviewer/workspace" && actor === "chair") data.assignments.push(...(chairPapers || []).flatMap((paper) => paper.assignments.filter((assignment) => assignment.reviewer_id === actor && assignment.eligible).map((assignment) => ({ ...assignment, submission_id: paper.submission_id, title: paper.title, status: paper.status, deadline: null }))));
   return { data: structuredClone(data), config: request, status: 200, statusText: "OK", headers: {} };
 };
 async function flush() { for (let i = 0; i < 5; i++) await act(async () => { await new Promise((resolve) => setTimeout(resolve, 5)); }); }
@@ -81,6 +82,34 @@ try {
   await test("chair can switch between conference management and personal assignments", async () => { chairFixtures(); const view = await mount("/reviewer"); try { await click(view, "My assigned reviews (2)"); assert.equal(view.main().querySelectorAll(".pf-assignment-row").length, 2); assert.equal(view.main().querySelectorAll(".pf-chair-paper").length, 0); await click(view, "Conference assignments"); assert.equal(view.main().querySelectorAll(".pf-chair-paper").length, 3); } finally { await view.close(); } });
   await test("chair filters distinguish submitted papers needing reviewers from author drafts", async () => { chairFixtures(); const view = await mount("/reviewer"); try { const selects = view.main().querySelectorAll(".pf-chair-assignment-filters select"); await input(selects[1], "unassigned"); assert.equal(view.main().querySelectorAll(".pf-chair-paper").length, 1); assert.match(view.main().querySelector(".pf-chair-paper").textContent, /Paper awaiting reviewers/); await input(selects[1], "missing"); assert.match(view.main().querySelector(".pf-chair-paper").textContent, /Paper under review/); } finally { await view.close(); } });
   await test("chair assignment keeps the existing API contract and refreshes confirmed rows", async () => { chairFixtures(); const view = await mount("/reviewer"); try { const row = view.main().querySelector(".pf-chair-paper"); await input(row.querySelector(".pf-chair-assign-form select"), "reviewer-new"); await click(view, "Assign reviewer"); const sent = calls.find((call) => call.url === "/submissions/submitted-paper/review"); assert.equal(JSON.parse(sent.payload), "reviewer-new"); assert.match(view.main().querySelector(".pf-chair-paper").textContent, /reviewer-new/); assert.deepEqual([...view.main().querySelectorAll(".pf-chair-assignment-stats strong")].map((node) => node.textContent), ["3", "0", "2", "0"]); } finally { await view.close(); } });
+  await test("chairs can assign themselves or another chair without changing conference roles", async () => {
+    chairFixtures(); chairReviewers.push({ user_id: "other-chair", role: "owner" });
+    const view = await mount("/reviewer"); try {
+      const row = view.main().querySelector(".pf-chair-paper");
+      const picker = row.querySelector(".pf-chair-assign-form select");
+      assert.equal(picker.querySelector('option[value="chair"]').textContent, "You (chair)");
+      assert.match(picker.querySelector('option[value="other-chair"]').textContent, /chair/);
+      assert.ok([...row.querySelectorAll("button")].some((button) => button.textContent === "Review this paper"));
+      assert.equal(view.main().querySelectorAll(".pf-chair-paper")[2].querySelector(".pf-chair-assign-form"), null);
+      await input(picker, "chair"); await click(view, "Assign reviewer");
+      assert.equal(JSON.parse(calls.find((call) => call.url === "/submissions/submitted-paper/review").payload), "chair");
+      assert.ok(view.main().querySelector('a[href="/submissions/submitted-paper?tab=reviews"]'));
+      await click(view, "My assigned reviews (3)");
+      assert.ok(view.main().querySelector('.pf-assignment-row a[href="/submissions/submitted-paper?tab=reviews"]'));
+      assert.equal(view.main().querySelectorAll(".pf-assignment-row").length, 3);
+    } finally { await view.close(); }
+  });
+  await test("self-review denial stays visible and never opens or invents a review assignment", async () => {
+    chairFixtures(); failAssignment = true;
+    const view = await mount("/reviewer"); try {
+      await click(view, "Review this paper");
+      assert.equal(JSON.parse(calls.find((call) => call.url === "/submissions/submitted-paper/review").payload), "chair");
+      assert.equal(view.location().pathname, "/reviewer");
+      assert.match(view.main().textContent, /formatting policy prevents assignment/);
+      assert.ok(!view.main().textContent.includes("Reviewer assigned."));
+      assert.equal(chairPapers[0].assignments.length, 0);
+    } finally { await view.close(); }
+  });
   await test("assignment denial retains the selected reviewer and never reports success", async () => { chairFixtures(); failAssignment = true; const view = await mount("/reviewer"); try { const select = view.main().querySelector(".pf-chair-assign-form select"); await input(select, "reviewer-new"); await click(view, "Assign reviewer"); assert.match(view.main().textContent, /formatting policy prevents assignment/); assert.equal(select.value, "reviewer-new"); assert.ok(!view.main().textContent.includes("Reviewer assigned.")); assert.deepEqual([...view.main().querySelectorAll(".pf-chair-assignment-stats strong")].map((node) => node.textContent), ["3", "1", "1", "0"]); } finally { await view.close(); } });
   await test("chair progress errors have a retry and never masquerade as no submissions", async () => { chairFixtures(); failProgress = true; const view = await mount("/reviewer"); try { assert.match(view.main().textContent, /Conference progress unavailable/); assert.deepEqual([...view.main().querySelectorAll(".pf-chair-assignment-stats strong")].map((node) => node.textContent), ["—", "—", "—", "—"]); assert.ok(!view.main().textContent.includes("No accessible submissions yet")); failProgress = false; await click(view, "Retry conference assignments"); assert.equal(view.main().querySelectorAll(".pf-chair-paper").length, 3); } finally { await view.close(); } });
   await test("my invitations opens a valid same-site link without accepting it", async () => { const view = await mount("/my-invitations"); try { const token = "z".repeat(43); await input(view.main().querySelector("input"), `http://localhost:5173/invitations#token=${token}`); await click(view, "Open invitation →"); assert.equal(view.location().pathname, "/invitations"); assert.equal(view.location().hash, `#token=${token}`); assert.ok(!calls.some((call) => call.url.endsWith("/accept"))); } finally { await view.close(); } });

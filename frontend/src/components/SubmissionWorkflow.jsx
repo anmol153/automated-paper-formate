@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
 import { assignSubmissionReviewer, errorMessage, getCollaborators, getSubmissionWorkflow, removeCollaborator, revokeSubmissionReviewer, saveCollaborator, transitionSubmission } from "../lib/api.js";
 
 const names = { submitted: "Submit for review", under_review: "Start review", changes_requested: "Request changes", accepted: "Accept paper", rejected: "Reject paper", withdrawn: "Withdraw paper" };
 
 export default function SubmissionWorkflow({ submissionId, onChanged, onChairLoaded, reloadKey }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [workflow, setWorkflow] = useState(null);
   const [authors, setAuthors] = useState(null);
   const [target, setTarget] = useState("");
@@ -53,6 +57,14 @@ export default function SubmissionWorkflow({ submissionId, onChanged, onChairLoa
         </label>
         <button className="btn-primary" disabled={busy || !target || (["submitted", "under_review"].includes(target) && !workflow.eligible) || (target === "submitted" && workflow.submission_window?.allowed === false) || (["under_review", "changes_requested", "accepted", "rejected"].includes(target) && workflow.review_phase_open === false)}>{busy ? "Saving…" : "Apply action"}</button>
       </form>}
+      {workflow.is_chair && ["submitted", "under_review"].includes(workflow.status) && <div className="flex flex-wrap gap-3">
+        {workflow.assignments.some((assignment) => assignment.reviewer_id === user?.user_id && ["pending", "accepted", "completed"].includes(assignment.status))
+          ? <Link className="btn-secondary" to={`/submissions/${submissionId}?tab=reviews`}>Open my review →</Link>
+          : <button type="button" className="btn-secondary" disabled={busy || !user || !workflow.eligible || workflow.review_phase_open === false} onClick={() => act(async () => {
+            await assignSubmissionReviewer(submissionId, user.user_id);
+            navigate(`/submissions/${submissionId}?tab=reviews`);
+          })}>Review this paper</button>}
+      </div>}
       {workflow.is_chair && ["submitted", "under_review"].includes(workflow.status) && <form className="space-y-3 border-t pt-4" onSubmit={(e) => { e.preventDefault(); act(async () => { await assignSubmissionReviewer(submissionId, reviewer); setReviewer(""); }); }}>
         <label className="block">Assign reviewer (account ID)
           <input className="input-base mt-2" value={reviewer} required disabled={busy} onChange={(e) => setReviewer(e.target.value)} />

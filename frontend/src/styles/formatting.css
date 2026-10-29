@@ -135,3 +135,37 @@
   .pf-template-version-pair { gap: 16px; padding: 18px; flex-wrap: wrap; }
   .pf-template-change-row { grid-template-columns: minmax(0, 1fr); padding: 18px; gap: 14px; }
 }
+
+/* Rule booleans stay aligned and readable in editors and published snapshots. */
+.pf-rule-editor .pf-rule-check { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; align-items: start; gap: 10px; min-width: 0; min-height: 44px; padding: 10px 0; cursor: pointer; }
+.pf-rule-editor .pf-rule-checkbox { appearance: auto; position: static; width: 17px; height: 17px; min-width: 17px; margin: 2px 0 0; accent-color: var(--pf-accent); cursor: inherit; }
+.pf-rule-editor .pf-rule-checkbox:focus-visible { outline: 2px solid var(--pf-accent); outline-offset: 3px; }
+.pf-rule-editor .pf-rule-check-copy { display: grid; gap: 5px; min-width: 0; }
+.pf-rule-editor .pf-rule-check-title { color: var(--pf-text); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.pf-rule-editor .pf-rule-check-hint { color: var(--pf-muted); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.pf-rule-editor .pf-rule-check[data-disabled] { cursor: default; }
+.pf-rule-editor .pf-rule-checkbox:disabled { opacity: 1; }
+.pf-rule-editor .pf-rule-check-value { align-self: start; padding: 2px 7px; border-radius: 4px; background: var(--pf-subtle); color: var(--pf-muted); font-size: 11px; line-height: 1.5; }
+.pf-rule-editor .pf-rule-check-value[data-checked="true"] { color: var(--pf-success); background: var(--pf-success-bg); }
+
+.pf-template-view-nav { display: flex; gap: 8px 20px; flex-wrap: wrap; border-bottom: 1px solid var(--pf-border); margin: 20px 0; }
+.pf-template-view-nav a { padding: 12px 0; color: var(--pf-muted); font-size: 13px; border-bottom: 2px solid transparent; }
+.pf-template-view-nav a[aria-current="page"] { border-color: var(--pf-accent); color: var(--pf-text); font-weight: 600; }
+.pf-published-rules { display: grid; gap: 24px; padding-top: 12px; }
+.pf-published-rules header { display: grid; gap: 8px; }
+.pf-published-rules header h3 { font-size: 18px; font-weight: 600; }
+.pf-published-rules p { font-size: 13px; color: var(--pf-muted); }
+.pf-published-rules section { border: 1px solid var(--pf-border); border-radius: 8px; overflow: hidden; }
+.pf-published-rules h4 { margin: 0; padding: 14px 18px; background: var(--pf-canvas); font-size: 14px; font-weight: 600; border-bottom: 1px solid var(--pf-border); }
+.pf-published-rule-rows { margin: 0; }
+.pf-published-rule-rows > div { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.4fr); gap: 16px; padding: 12px 18px; border-bottom: 1px solid var(--pf-border); font-size: 13px; }
+.pf-published-rule-rows > div:last-child { border-bottom: 0; }
+.pf-published-rule-rows dt { color: var(--pf-muted); }
+.pf-published-rule-rows dd { margin: 0; min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.pf-published-rule-rows dd > dl { border-left: 2px solid var(--pf-border); }
+.pf-published-rule-rows dd > dl > div { grid-template-columns: minmax(0,1fr); gap: 5px; }
+.pf-rule-unset { color: var(--pf-muted); }
+.pf-published-boolean { font-weight: 600; }
+.pf-published-boolean[data-enabled="true"] { color: var(--pf-success); }
+.pf-template-comparison-entry { display: grid; justify-items: start; gap: 16px; padding: 12px 0; }
+@media (max-width: 600px) { .pf-published-rule-rows > div { grid-template-columns: minmax(0,1fr); gap: 6px; padding: 12px; } }

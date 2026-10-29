@@ -356,3 +356,64 @@ def test_chair_dashboard_omits_authored_papers_and_requires_chair_membership(wor
     assert any(p["submission_id"]==base.rsplit('/',1)[1] for p in w.client("chair").get(url).json()["papers"])
     w.conferences.add_member(w.conf.conference_id,"author",ConferenceRole.OWNER)
     assert not any(p["submission_id"]==base.rsplit('/',1)[1] for p in w.client("author").get(url).json()["papers"])
+
+
+def test_chair_can_assign_self_draft_and_submit_a_formal_review(world):
+    w = world
+    base, first, payload = setup(w)
+    chair = w.client("chair")
+    assigned = chair.post(base + "/review", json="chair")
+    assert assigned.status_code == 201, assigned.text
+    own_assignment = assigned.json()["assignment_id"]
+    assert chair.post(base + "/review", json="chair").status_code == 409
+    details = chair.get(base + "/reviews").json()
+    assert details["is_chair"] and details["can_review"]
+    assert details["assignment_id"] == own_assignment
+    payload.update(assignment_id=own_assignment, confidential_comments="Chair's private draft")
+    draft = chair.put(base + "/reviews/mine", json=payload)
+    assert draft.status_code == 200, draft.text
+    assert draft.json()["state"] == "draft"
+    assert chair.get(base + "/reviews").json()["own_review"]["confidential_comments"] == "Chair's private draft"
+    assert w.client("author").get(base + "/reviews").json()["reviews"] == []
+    assert w.client("reviewer").get(base + "/reviews").json()["reviews"] == []
+    workspace = chair.get("/api/v1/reviewer/workspace").json()
+    own_paper = next(row for row in workspace["assignments"] if row["assignment_id"] == own_assignment)
+    assert own_paper["review_state"] == "draft"
+    payload.update(expected_version=1, submit=True)
+    submitted = chair.put(base + "/reviews/mine", json=payload)
+    assert submitted.status_code == 200, submitted.text
+    assert submitted.json()["state"] == "submitted"
+    assert chair.get(base + "/reviews").json()["progress"]["submitted"] == 1
+    assert next(row for row in chair.get("/api/v1/reviewer/workspace").json()["assignments"] if row["assignment_id"] == own_assignment)["review_state"] == "submitted"
+    assert release(w, base, first).json()["released"] == 1
+    public = w.client("author").get(base + "/reviews").json()["reviews"][0]
+    assert public["reviewer_id"] == "Reviewer"
+    assert "confidential_comments" not in public
+
+
+def test_chair_review_conflict_revokes_assignment_and_prevents_further_reviews(world):
+    w = world
+    base, _, payload = setup(w)
+    chair = w.client("chair")
+    assignment = chair.post(base + "/review", json="chair").json()
+    payload["assignment_id"] = assignment["assignment_id"]
+    assert chair.put(base + "/reviews/mine", json=payload).status_code == 200
+    conflict = chair.post(f"/api/v1/reviewer/assignments/{assignment['assignment_id']}/conflict", json={"reason": "I collaborated with an author."})
+    assert conflict.status_code == 201, conflict.text
+    details = chair.get(base + "/reviews").json()
+    assert not details["can_review"] and details["assignment_id"] is None
+    assert chair.put(base + "/reviews/mine", json={**payload, "expected_version": 1, "submit": True}).status_code == 403
+    assert chair.post(base + "/review", json="chair").status_code == 403
+    assert not any(row["assignment_id"] == assignment["assignment_id"] for row in chair.get("/api/v1/reviewer/workspace").json()["assignments"])
+    w.conferences.add_member(w.conf.conference_id, "unassigned", ConferenceRole.OWNER)
+    assert w.client("unassigned").post(base + "/review", json="chair").status_code == 409
+
+
+def test_chair_role_does_not_allow_self_review_of_an_authored_paper(world):
+    w = world
+    base, _, payload = setup(w)
+    w.conferences.add_member(w.conf.conference_id, "author", ConferenceRole.OWNER)
+    assert w.client("author").post(base + "/review", json="author").status_code == 403
+    assert w.client("chair").post(base + "/review", json="author").status_code == 409
+    assert w.client("author").put(base + "/reviews/mine", json=payload).status_code == 403
+    assert not w.client("author").get(base + "/reviews").json()["can_review"]
